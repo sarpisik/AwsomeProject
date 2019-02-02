@@ -58,7 +58,7 @@ class Firebase {
   onAuthUserListener = (next, fallback) => this.auth.onAuthStateChanged(authUser => {
     if (authUser) {
       this.user(authUser.uid)
-        .once('value')
+        .on('value')
         .then(snapshot => {
           const dbUser = snapshot.val();
 

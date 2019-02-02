@@ -11,7 +11,46 @@ import {
   KeyboardAvoidingView,
   Image
 } from 'react-native';
-import { withNavigationFocus } from 'react-navigation';
+import { AuthUserContext } from '../Auth/Session';
+// import { withNavigationFocus } from 'react-navigation';
+import { withFirebase } from '../Firebase';
+const ChatScreenBase = ({authUser, cid}) => {
+  const messages = authUser.messagesList.filter(obj => obj.cid === cid)[0].messages;
+
+  const renderItem = ({item}) => {
+    const getSentDate = new Date(item.createdAt).toLocaleDateString();
+    const getSentTime = new Date(item.createdAt).toLocaleTimeString();
+    return (
+      <View style={styles.row}>
+        <Image style={styles.avatar} source={authUser.photoURL} />
+        <View style={styles.rowText}>
+          <View style={styles.senderRow}>
+            <Text style={styles.sender}>
+              {item.userId}
+            </Text>
+            <Text style={styles.sender}>
+              {`${getSentDate} - ${getSentTime}`}
+            </Text>
+          </View>
+          <Text style={styles.message}>
+            {item.text}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <FlatList
+      data={messages}
+      keyExtractor={(item, index) => index.toString()}
+      renderItem={renderItem}
+    />
+  );
+}
+
+ChatScreenBase.propTypes = {
+};
 
 class ChatScreen extends Component {
   constructor(props) {
@@ -23,10 +62,10 @@ class ChatScreen extends Component {
       text: '',
       messages: [],
       limit: 10,
-      usersIDs: {
-        [params.cid]: params.contactName,
-        [params.authUser.uid]: params.authUser.name,
-      },
+      // usersIDs: {
+      //   [params.cid]: params.contactName,
+      //   [params.authUser.uid]: params.authUser.name,
+      // },
       chatPath: '',
       error: null,
     };
@@ -37,65 +76,13 @@ class ChatScreen extends Component {
     title: navigation.getParam('contactName', 'Anonymous'),
   });
 
-  componentDidMount() {
-    const { chatPath, contactName } = this.props.navigation.state.params;
-    console.log(`${contactName} mounted in ChatsScreen`);
-    // if there is already exist a chat record,
-    // use its path to listen database
-    if (chatPath) {
-      this.setState(state => ({
-        isLoading: true,
-      }),
-        this.onListenForMessages(chatPath)
-      );
-    }
-  }
-
-  componentWillUnmount() {
-    const { chatPath, firebase, contactName } = this.props.navigation.state.params;
-    console.log(`${contactName} unmounted in ChatsScreen`);
-    chatPath &&
-    firebase
-      .message(chatPath)
-      .child('messages')
-      .off();
-  }
-
-  onListenForMessages = path => {
-    const { firebase } = this.props.navigation.state.params;
-
-    firebase
-      .message(path)
-      .child('messages')
-      // Sort items by created time
-      .orderByChild('createdAt')
-      // Limit items to show
-      .limitToLast(this.state.limit)
-      .on('value', snapshot => {
-        const messageObject = snapshot.val();
-
-        // Convert message list object to array
-        // for later use in flatlist component
-        const messageList = Object.keys(messageObject).map( key => ({
-          ...messageObject[key],
-          path: key,
-        }));
-
-        this.setState(state => {
-          return ({
-            messages: messageList,
-            chatPath: path,
-            isLoading: false,
-          })
-        });
-      });
-  }
-
   onSendMessage = () => {
-    const { firebase, authUser, cid } = this.props.navigation.state.params;
-    const { chatPath, usersIDs } = this.state;
+    const { firebase, authUser } = this.props;
+    const { path, cid } = this.props.navigation.state.params;
 
-    // Use chatPath if it exist already
+    let chatPath = path || this.state.path;
+
+    // Use chat path if it exist already
     if (chatPath) {
 
       this.onCreateMessage(chatPath);
@@ -110,7 +97,7 @@ class ChatScreen extends Component {
 
       // Then use the path of new created chat object
       // to interact in every messages
-      this.onCreateMessage(newChatPath.key, true);
+      this.onCreateMessage(newChatPath.key);
 
       // And also save this path into the both users database
       // for later uses
@@ -121,22 +108,20 @@ class ChatScreen extends Component {
 
       // Store the new chat object's path into the state for reusebility
       this.setState({
-        chatPath: newChatPath.key,
+        path: newChatPath.key,
       });
     }
   }
 
-  onCreateMessage = (path, isInitial) => {
-    const { firebase, authUser, cid } = this.props.navigation.state.params;
+  onCreateMessage = path => {
+    const { firebase } = this.props;
+    const { authUser, cid } = this.props.navigation.state.params;
 
     firebase.message(path).child('messages').push({
       text: this.state.text,
       userId: authUser.uid,
       createdAt: firebase.serverValue.TIMESTAMP,
     }, error => error && this.setState({error}));
-
-    // Start to listen for updates in messages database from now
-    isInitial && this.onListenForMessages(path);
 
     // Clear the inputfield after update
     this.setState({
@@ -145,11 +130,11 @@ class ChatScreen extends Component {
   }
 
   createChatObjectForUser = (userId, contactId, path) => {
-    const { firebase } = this.props.navigation.state.params;
+    const { firebase } = this.props;
 
     // Prepare the object which will send to
-    // specified user's database
-    const newChatObjectRecord = {
+    // user's specified database
+    const newChatRecordObject = {
       contactId: contactId,
       path: path,
     };
@@ -161,74 +146,38 @@ class ChatScreen extends Component {
     currentUser.push(newChatObjectRecord);
   }
 
-  renderItem = ({ item }) => {
-    const { authUser } = this.props.navigation.state.params;
-    const { messages, usersIDs } = this.state;
-
-    const getSentDate = new Date(item.createdAt).toLocaleDateString();
-    const getSentTime = new Date(item.createdAt).toLocaleTimeString();
-
-    if (messages.length > 0) return (
-      <View style={styles.row}>
-        <Image style={styles.avatar} source={authUser.photoURL} />
-        <View style={styles.rowText}>
-          <View style={styles.senderRow}>
-            <Text style={styles.sender}>
-              {usersIDs[item.userId]}
-            </Text>
-            <Text style={styles.sender}>
-              {`${getSentDate} - ${getSentTime}`}
-            </Text>
-          </View>
-          <Text style={styles.message}>
-            {item.text}
-          </Text>
-        </View>
-      </View>
-    );
-
-    return <Text style={styles.message}>There are no messages to show...</Text>;
-  }
-
   render() {
-    const { navigation, isFocused } = this.props;
     const { text, messages, error } = this.state;
-
-    isFocused
-      ? console.log(`${navigation.state.params.contactName} is focused`)
-      : console.log(`${navigation.state.params.contactName} is not focused`);
-
+    const { cid } = this.props.navigation.state.params;
 
     return (
-      <View style={styles.container}>
-        <FlatList
-          data={messages}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={this.renderItem}
-        />
-        <KeyboardAvoidingView behavior="padding">
-          <View style={styles.footer}>
-            <TextInput
-              value={text}
-              style={styles.input}
-              underlineColorAndroid="transparent"
-              placeholder="Type text"
-              onChangeText={(text) => this.setState({text})}
-              onSubmitEditing={this.onSendMessage}
-            />
+      <AuthUserContext.Consumer>
+        {authUser => <View style={styles.container}>
+          <ChatScreenBase cid={cid} authUser={authUser} />
+          <KeyboardAvoidingView behavior="padding">
+            <View style={styles.footer}>
+              <TextInput
+                value={text}
+                style={styles.input}
+                underlineColorAndroid="transparent"
+                placeholder="Type text"
+                onChangeText={(text) => this.setState({text})}
+                onSubmitEditing={this.onSendMessage}
+              />
 
-            <TouchableOpacity onPress={this.onSendMessage}>
-              <Text style={styles.send}>Send</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-        {error && <Text>{error.message}</Text>}
-      </View>
+              <TouchableOpacity onPress={this.onSendMessage}>
+                <Text style={styles.send}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+          {error && <Text>{error.message}</Text>}
+        </View>}
+      </AuthUserContext.Consumer>
     );
   }
 }
 
-export default withNavigationFocus(ChatScreen);
+export default withFirebase(ChatScreen);
 
 const styles = StyleSheet.create({
   container: {
@@ -285,9 +234,9 @@ ChatScreen.propTypes = {
       params: PropTypes.shape({
         authUser : PropTypes.object.isRequired,
         cid : PropTypes.string.isRequired,
-        contactName : PropTypes.string.isRequired,
-        chatPath: PropTypes.string,
-        firebase: PropTypes.object.isRequired,
+        // contactName : PropTypes.string.isRequired,
+        // chatPath: PropTypes.string,
+        // firebase: PropTypes.object.isRequired,
       }),
     }),
   }),

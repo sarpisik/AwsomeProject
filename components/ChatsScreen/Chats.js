@@ -36,11 +36,13 @@ class Chats extends Component {
     this.props.navigation.navigate(
       'ChatScreen',
       {
-        contactName: chatObject.contactName, // Contact name for topbar
-        cid: chatObject.contactId, // ContactID
+        // contactName: chatObject.contactName, // Contact name for topbar
+        // cid: chatObject.contactId, // ContactID
+        cid: chatObject.cid, // ContactID
+        path: chatObject.path,
         authUser: authUser, // User (Sender)
-        chatPath: chatObject.path, // Path of chat obj in messages database
-        firebase: this.props.firebase // APIs to interact server
+        // chatPath: chatObject.path, // Path of chat obj in messages database
+        // firebase: this.props.firebase // APIs to interact server
       }
     );
   }
