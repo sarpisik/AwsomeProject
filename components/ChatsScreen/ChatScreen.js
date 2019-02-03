@@ -14,7 +14,8 @@ import {
 import { AuthUserContext } from '../Auth/Session';
 // import { withNavigationFocus } from 'react-navigation';
 import { withFirebase } from '../Firebase';
-const ChatScreenBase = ({authUser, cid}) => {
+
+const ShowMessages = ({authUser, cid}) => {
   const messages = authUser.messagesList.filter(obj => obj.cid === cid)[0].messages;
 
   const renderItem = ({item}) => {
@@ -49,7 +50,9 @@ const ChatScreenBase = ({authUser, cid}) => {
   );
 }
 
-ChatScreenBase.propTypes = {
+ShowMessages.propTypes = {
+  authUser: PropTypes.object.isRequired,
+  cid: PropTypes.string.isRequired,
 };
 
 class ChatScreen extends Component {
@@ -153,7 +156,7 @@ class ChatScreen extends Component {
     return (
       <AuthUserContext.Consumer>
         {authUser => <View style={styles.container}>
-          <ChatScreenBase cid={cid} authUser={authUser} />
+          <ShowMessages cid={cid} authUser={authUser} />
           <KeyboardAvoidingView behavior="padding">
             <View style={styles.footer}>
               <TextInput

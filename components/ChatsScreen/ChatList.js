@@ -178,17 +178,27 @@ class ChatList extends Component {
   //   return false
   // // }
 
+  renderMergedList = () => {
+    const { authUser } = this.props;
+
+    const mergedMessagesList = authUser.messagesList.map(chatObj => {
+      const contact = authUser.mergedContactsList.find(contactObj => contactObj.cid === chatObj.cid);
+      // console.log("contact ,",contact);
+
+      if(contact) {
+        chatObj.name = contact.name;
+        return chatObj;
+      }
+
+      return chatObj;
+    });
+    // console.log("mergedMessagesList ,",mergedMessagesList);
+  }
+
   render() {
     const { onNavigate, isFocused, authUser } = this.props;
-    console.log("AUTHUSER FROM CHATLIST, ",authUser);
-
-    if (isFocused) {
-      // this.state.isMounted && this.onUpdateListen();
-      console.log("ChatList isFocused");
-    } else {
-
-      console.log("ChatList notFocused");
-    }
+    // console.log("AUTHUSER FROM CHATLIST, ",authUser);
+    // authUser.messagesList && authUser.mergedContactsList && this.renderMergedList();
 
     if (this.state.isLoading) return <Text>Loading...</Text>
 
@@ -201,7 +211,7 @@ class ChatList extends Component {
             <TouchableOpacity onPress={() => onNavigate(this.props.authUser, item)}>
               <View>
                 <Text>
-                  {item.cid}
+                  {item.contactName}
                 </Text>
                 <Text>
                   {item.messages[item.messages.length-1].text}
