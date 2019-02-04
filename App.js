@@ -13,7 +13,7 @@ import {
 } from "react-navigation";
 import Firebase, { FirebaseContext } from './components/Firebase';
 import { withAuthentication } from './components/Auth/Session';
-import Contacts, {ContactScreen, AddNewContactScreen} from './components/Contacts';
+import Contacts, {ContactScreen, AddNewContactScreen} from './components/ContactsScreen';
 import Chats, {ChatScreen} from './components/ChatsScreen';
 import Account from './components/Account';
 import { SignUpScreen, SignInScreen } from './components/Auth';

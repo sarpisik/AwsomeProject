@@ -32,47 +32,38 @@ class Chats extends Component {
 
   // Using in ChatList component
   // to navigate to ChatScreen
-  onNavigate = (authUser, chatObject) => {
+  onNavigate = chatObject => {
     this.props.navigation.navigate(
       'ChatScreen',
       {
-        // contactName: chatObject.contactName, // Contact name for topbar
-        // cid: chatObject.contactId, // ContactID
+        contactName: chatObject.contactName,
         cid: chatObject.cid, // ContactID
         path: chatObject.path,
-        authUser: authUser, // User (Sender)
-        // chatPath: chatObject.path, // Path of chat obj in messages database
-        // firebase: this.props.firebase // APIs to interact server
       }
     );
   }
 
   render() {
-    const { firebase } = this.props;
-    const { navigate } = this.props.navigation;
-    // console.log(this.props.navigation.state);
+    const {authUser, navigation:{ navigate }} = this.props;
 
     return (
-      <AuthUserContext.Consumer>
-        {authUser => <View style={{justifyContent: "center", }}>
+      <View style={{justifyContent: "center", }}>
 
-          {/* Pass authuser and firebase class */}
-          <ChatList
-            authUser={authUser}
-            firebase={firebase}
-            onNavigate={this.onNavigate}
-          />
+        <ChatList
+          data={authUser.messagesList}
+          // firebase={firebase}
+          onNavigate={this.onNavigate}
+        />
 
-          <Button
-            title="Go to Contacts"
-            onPress={() => this.props.navigation.navigate('CONTACTS', {
-              id: 50,
-              name: 'UserOne',
-              title: 'Contacts List'
-            })}
-          />
-        </View>}
-      </AuthUserContext.Consumer>
+        <Button
+          title="Go to Contacts"
+          onPress={() => navigate('CONTACTS', {
+            id: 50,
+            name: 'UserOne',
+            title: 'Contacts List'
+          })}
+        />
+      </View>
     );
   }
 }
