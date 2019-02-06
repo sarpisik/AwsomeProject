@@ -65,7 +65,7 @@ class Firebase {
 
       // Then fetch the data
       let snapshot = await this.user(authUser.uid).once('value');
-      const dbUser = snapshot.val();
+      const dbUser = await snapshot.val();
       const imageUrl = authUser.photoURL
         ? {uri: authUser.photoURL}
         : require('../../assets/profile_picture.png');
@@ -92,7 +92,7 @@ class Firebase {
       if (!dbUser.chatList) {
 
         // Default Empty contactsList
-        dbUser.chatList = [];
+        dbUser.chatList = {};
       }
 
       // Convert contactsList obj from server to a list of array
@@ -111,7 +111,7 @@ class Firebase {
           .child('name')
           .once('value');
 
-        mergedContactObj.name = snapshot.val();
+        mergedContactObj.name = await snapshot.val();
 
         mergedContactsList = [
           mergedContactObj,
@@ -153,7 +153,11 @@ class Firebase {
 
         // Both condition return an object
         contactsListStatus === 'ready'
-          ? contact = await authUser.mergedContactsList.find(obj => obj.cid === mergedChatObj.contactId)
+          ? contact = await authUser.mergedContactsList.find(obj => {
+            const isContact = obj.cid === mergedChatObj.contactId;
+
+            if (isContact) return obj;
+          })
           : contact = await this.user(mergedChatObj.contactId).child('name').once('value');
 
           contactName = (
@@ -171,7 +175,7 @@ class Firebase {
           .once('value');
 
         // The list of every message objects
-        const messagesList = Object.values(snapshot.val()).reverse();
+        const messagesList = await Object.values(snapshot.val()).reverse();
 
         // Merge every message objects with additional info
         // for later use in children components

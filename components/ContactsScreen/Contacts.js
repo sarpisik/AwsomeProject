@@ -4,6 +4,7 @@ import { StyleSheet, View, FlatList, Text, TextInput, Button, TouchableOpacity }
 
 import { compose } from 'recompose';
 import { withAuthorization } from '../Auth/Session';
+
 import ContactsList from './ContactsList';
 
 
@@ -17,7 +18,6 @@ class Contacts extends Component {
 
   // When pressed on a contact in ContactsList component
   onNavigate = contact => {
-    const { firebase, authUser } = this.props;
     const { navigate } = this.props.navigation;
 
     // Navigate to ContactScreen
@@ -38,8 +38,7 @@ class Contacts extends Component {
       <View style={{ justifyContent: "center" }}>
 
         <ContactsList
-          authUser={authUser}
-          firebase={firebase}
+          data={authUser.mergedContactsList}
           onNavigate={this.onNavigate}
         />
 

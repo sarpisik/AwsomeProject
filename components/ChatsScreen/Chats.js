@@ -1,6 +1,4 @@
 // TODO: Set message read process functionality
-// TODO: Set one HOC to listen data
-// TODO: Scroll to bottom on ChatScreen
 // TODO: navigate to ChatScreen onclick notification
 
 import React, { Component } from 'react';
@@ -13,23 +11,10 @@ import {
 
 import { compose } from 'recompose';
 import { withAuthorization } from '../Auth/Session';
-import { AuthUserContext } from '../Auth/Session';
 
 import ChatList from './ChatList';
 
-
-
-
-
 class Chats extends Component {
-  componentDidMount() {
-    console.log("Chats mounted");
-  }
-
-  componentWillUnmount() {
-    console.log("Chats unmounted");
-  }
-
   // Using in ChatList component
   // to navigate to ChatScreen
   onNavigate = chatObject => {
@@ -51,7 +36,6 @@ class Chats extends Component {
 
         <ChatList
           data={authUser.messagesList}
-          // firebase={firebase}
           onNavigate={this.onNavigate}
         />
 
