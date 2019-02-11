@@ -130,7 +130,6 @@ class ContactScreen extends Component {
                 history.goBack();
               } catch (error) {
                 this.setState({ error });
-                console.log(error);
               }
             }}
           >

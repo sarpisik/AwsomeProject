@@ -18,8 +18,12 @@ import * as ROUTES from "../../constants";
 class ChatList extends Component {
   renderItem = ({ item }) => {
     const { authUser } = this.props;
-    const getSentDate = new Date(item.messages[0].createdAt).toLocaleDateString();
-    const getSentTime = new Date(item.messages[0].createdAt).toLocaleTimeString();
+    const getSentDate = new Date(
+      item.messages[0].createdAt
+    ).toLocaleDateString();
+    const getSentTime = new Date(
+      item.messages[0].createdAt
+    ).toLocaleTimeString();
     return (
       <Link
         to={{
@@ -31,7 +35,7 @@ class ChatList extends Component {
           }
         }}
       >
-      <View style={styles.row}>
+        <View style={styles.row}>
           {/* Profile Photo */}
           <Image style={styles.avatar} source={authUser.photoURL} />
 
@@ -68,7 +72,6 @@ class ChatList extends Component {
       (firstObj, secondObj) =>
         secondObj.messages[0].createdAt - firstObj.messages[0].createdAt
     );
-    // console.log("AUTHUSER FROM CHATLIST, ", messagesList);
     return (
       <FlatList
         data={messagesList}

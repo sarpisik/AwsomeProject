@@ -81,9 +81,6 @@ class ChatScreen extends Component {
 
     const getSentDate = new Date(item.createdAt).toLocaleDateString();
     const getSentTime = new Date(item.createdAt).toLocaleTimeString();
-
-    console.log("item.isRead ,", typeof item.isRead, item.isRead);
-
     const textColor =
       item.userId === authUser.uid
         ? item.isRead === "true"
@@ -220,8 +217,6 @@ class ChatScreen extends Component {
       messageObject =>
         messageObject.userId === cid && messageObject.isRead === "false"
     );
-    console.log("contactUserMessages ,", contactUserMessages);
-
     contactUserMessages.forEach(messageObject => {
       firebase
         .message(chatPath)
@@ -239,9 +234,6 @@ class ChatScreen extends Component {
       }
     } = this.props;
     const { text, error, messagesList } = this.state;
-
-    console.log("ChatScreen rendered ,", messagesList);
-
     this.handleReadMessage(cid);
     return (
       <View style={styles.container}>

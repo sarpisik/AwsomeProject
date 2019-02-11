@@ -7,7 +7,6 @@ import * as ROUTES from "../../constants";
 // CONTACTS LIST
 export default class ContactsList extends Component {
   renderItem = ({ item }) => {
-    console.log("item from contactslist ,", item);
     return (
       <Link
         to={{

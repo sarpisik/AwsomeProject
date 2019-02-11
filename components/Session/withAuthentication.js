@@ -3,6 +3,7 @@
 // WHICH IS CHILD OF TOP COMPONENT (APP.JS) CAN CONSUME
 // THE AUTH STATE VIA withAuthorization HOC
 // TODO: CHECK PROPTYPES FOR EVERY COMPONENT
+// TODO: Set route goback for home screen
 
 import React from "react";
 import { Text } from "react-native";
@@ -189,7 +190,7 @@ const withAuthentication = Component => {
           let messageObj = await snapshot.val();
           messageObj.key = snapshot.key;
           messageObj.ref = snapshot.ref;
-          
+
           await this.setState(
             state => {
               initLength = state.authUser.messagesList[index].messages.unshift(
@@ -223,7 +224,7 @@ const withAuthentication = Component => {
         .child(`messages/${message.key}/isRead`)
         .on("value", (snapshot, key) => {
           let messageObjectIsRead = snapshot.val();
-          
+
           this.setState(state => {
             const currentLength =
               state.authUser.messagesList[index].messages.length;

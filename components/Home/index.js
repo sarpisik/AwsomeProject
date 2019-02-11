@@ -65,24 +65,15 @@ export class Home extends Component {
         </View>
 
         <View style={[styles.bottomTabBar, styles.bar]}>
-          <Link
-            style={styles.link}
-            to={`${match.url}/${ROUTES.CHATS}`}            
-          >
+          <Link style={styles.link} to={`${match.url}/${ROUTES.CHATS}`}>
             <Text>Chat</Text>
           </Link>
 
-          <Link
-            style={styles.link}
-            to={`${match.url}/${ROUTES.CONTACTS}`}            
-          >
+          <Link style={styles.link} to={`${match.url}/${ROUTES.CONTACTS}`}>
             <Text>Contacts</Text>
           </Link>
 
-          <Link
-            style={styles.link}
-            to={`${match.url}/${ROUTES.ACCOUNT}`}            
-          >
+          <Link style={styles.link} to={`${match.url}/${ROUTES.ACCOUNT}`}>
             <Text> Account </Text>
           </Link>
         </View>
@@ -112,14 +103,14 @@ const styles = StyleSheet.create({
     paddingRight: 20
   },
   screen: {
-    flex: 5
+    flex: 1
     // backgroundColor: 'blue',
   },
   link: {
     justifyContent: "center"
   },
   bar: {
-    flex: 1,
+    height: 55,
     flexDirection: "row",
     alignItems: "stretch",
     justifyContent: "space-around"
@@ -129,7 +120,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#fff",
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 20
   }
 });

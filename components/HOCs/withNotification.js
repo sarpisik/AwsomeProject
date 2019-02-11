@@ -70,30 +70,28 @@ const withNotification = Component => {
 
     // Notification creator & sender
     // Use this on wrapped component
-    sendNotificationImmediately = async ({ contactId, senderName, text, chatPath }) =>
-      // senderName,
-      // text,
-      // authUser,
-      // contactId,
-      // chatPath
-      {
-        await console.log("message from senderName ,",senderName)
-        this.state.isNotification &&
-          (await Notifications.presentLocalNotificationAsync({
-            title: senderName,
-            body: text,
-            data: {
-              // authUser: authUser,
-              cid: contactId,
-              contactName: senderName,
-              chatPath: chatPath
-            },
-            android: {
-              channelId: "chat-messages"
-            },
-            ios: { sound: true }
-          }));
-      };
+    sendNotificationImmediately = async ({
+      contactId,
+      senderName,
+      text,
+      chatPath
+    }) => {
+      this.state.isNotification &&
+        (await Notifications.presentLocalNotificationAsync({
+          title: senderName,
+          body: text,
+          data: {
+            // authUser: authUser,
+            cid: contactId,
+            contactName: senderName,
+            chatPath: chatPath
+          },
+          android: {
+            channelId: "chat-messages"
+          },
+          ios: { sound: true }
+        }));
+    };
 
     render() {
       return (

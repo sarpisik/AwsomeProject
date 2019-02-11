@@ -15,14 +15,12 @@ const pages = {
 // Run page by referred link
 const Page = ({ match }) => {
   const Component = pages[match.params.screenId];
-  // console.log("match from auth ,", match);
   return <Component />;
 };
 
 export class Auth extends Component {
   render() {
     const { match } = this.props;
-    console.log("match from auth ,", match);
 
     return (
       <View style={{ flex: 1 }}>
