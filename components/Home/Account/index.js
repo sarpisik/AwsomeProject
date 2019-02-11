@@ -1,12 +1,12 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { StyleSheet, View, FlatList, Text, Image } from 'react-native';
+import React from "react";
+import PropTypes from "prop-types";
+import { StyleSheet, View, FlatList, Text, Image } from "react-native";
 
-import { compose } from 'recompose';
-import { withAuthorization } from './Auth/Session';
-import { AuthUserContext } from './Auth/Session';
+import { compose } from "recompose";
+import { withAuthorization } from "../../Session";
+import { AuthUserContext } from "../../Session";
 
-import {SignOut} from './Auth';
+import SignOut from "../../Auth/SignOut";
 
 const showAccountInfoList = [
   "email",
@@ -16,8 +16,7 @@ const showAccountInfoList = [
   "photoURL"
 ];
 
-export const AccountDetails = ({authUser}) => {
-
+const AccountDetails = ({ authUser }) => {
   // const imageUrl = authUser.photoURL
   //   ? {uri: authUser.photoURL}
   //   : require('../assets/profile_picture.png');
@@ -43,41 +42,30 @@ export const AccountDetails = ({authUser}) => {
       </View>
     </>
   );
-}
+};
 
 const styles = StyleSheet.create({
   image: {
     width: 150,
-    height: 150,
-  },
+    height: 150
+  }
 });
 
 AccountDetails.propTypes = {
-  authUser: PropTypes.object.isRequired,
+  authUser: PropTypes.object.isRequired
 };
 
-const Account = ({firebase}) => {
-
+const Account = ({ firebase, authUser }) => {
   return (
-    <AuthUserContext.Consumer>
-      {authUser => <View>
-        <AccountDetails
-          authUser={authUser}
-          firebase={firebase}
-        />
-        <SignOut />
-      </View>}
-    </AuthUserContext.Consumer>
-
+    <View>
+      <AccountDetails authUser={authUser} firebase={firebase} />
+      <SignOut />
+    </View>
   );
-}
+};
 
 Account.propTypes = {
-  firebase: PropTypes.object.isRequired,
+  firebase: PropTypes.object.isRequired
 };
 
-const condition = authUser => authUser != null;
-
-export default compose(
-  withAuthorization(condition)
-)(Account);
+export default Account;

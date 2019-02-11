@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 
 import { compose } from 'recompose';
-import { withNavigation } from 'react-navigation';
+import { withRouter } from 'react-router-native';
 import { withFirebase } from '../Firebase';
+
+import * as ROUTES from '../constants'
 
 import { SignUpLink } from './SignUpScreen';
 
@@ -22,7 +24,7 @@ class SignInScreenBase extends React.Component {
   }
 
   onSubmit = () => {
-    const { firebase, navigation } = this.props;
+    const { firebase, history } = this.props;
     const {
       email,
       password
@@ -37,7 +39,7 @@ class SignInScreenBase extends React.Component {
         this.setState({ ...INITIAL_STATE });
 
         // Redirect to CHATS tab in AppStack
-        navigation.navigate('CHATS');
+        history.replace({ pathname: `/${ROUTES.HOME}` });
       })
 
       // PRINT ERROR
@@ -108,7 +110,7 @@ class SignInScreenBase extends React.Component {
 }
 
 const SignInScreen  = compose(
-  withNavigation,
+  withRouter,
   withFirebase
 )(SignInScreenBase);
 

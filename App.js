@@ -1,119 +1,92 @@
-import React from 'react';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { StyleSheet, Text, View } from "react-native";
+// import {
+//   createBottomTabNavigator,
+//   createStackNavigator,
+//   createAppContainer,
+//   createSwitchNavigator
+// } from "react-navigation";
+
 import {
-  StyleSheet,
-  Text,
-  View,
-  Image
-} from 'react-native';
+  NativeRouter,
+  Route,
+  Switch,
+  BackButton,
+  Redirect
+} from "react-router-native";
+import Firebase, { FirebaseContext } from "./components/Firebase";
+import { withAuthentication } from "./components/Session";
+import * as ROUTES from "./components/constants";
+// import Contacts, {
+//   ContactScreen,
+//   AddNewContactScreen
+// } from "./components/ContactsScreen";
+// import Chats, { ChatScreen } from "./components/ChatsSc"reen";
+// import Account from "./components/Account";
+// import { SignUpScreen, SignInScreen } from "./components/Auth";
+import Home from "./components/Home";
+import Auth from "./components/Auth";
+import { ChatScreen } from "./components/Home/ChatsScreen";
 import {
-  createBottomTabNavigator,
-  createStackNavigator,
-  createAppContainer,
-  createSwitchNavigator
-} from "react-navigation";
-import Firebase, { FirebaseContext } from './components/Firebase';
-import { withAuthentication } from './components/Auth/Session';
-import Contacts, {ContactScreen, AddNewContactScreen} from './components/ContactsScreen';
-import Chats, {ChatScreen} from './components/ChatsScreen';
-import Account from './components/Account';
-import { SignUpScreen, SignInScreen } from './components/Auth';
+  ContactScreen,
+  AddNewContactScreen
+} from "./components/Home/ContactsScreen";
 
 const topBarStyle = {
   headerStyle: {
-    backgroundColor: '#f4511e',
+    backgroundColor: "#f4511e"
   },
-  headerTintColor: '#fff',
+  headerTintColor: "#fff",
   headerTitleStyle: {
-    fontWeight: 'bold',
-  },
+    fontWeight: "bold"
+  }
 };
 
-// Bottom TabBar Menu
-const TabNavigator = createBottomTabNavigator({
-  CHATS: Chats,
-  CONTACTS: Contacts, // ContactList & AddNewContactScreen
-  ACCOUNT: Account,
-});
-
-TabNavigator.navigationOptions = ({ navigation }) => {
-  const { routeName } = navigation.state.routes[navigation.state.index];
-
-  // You can do whatever you like here to pick the title based on the route name
-  const headerTitle = routeName;
-
-  return {
-    headerTitle,
-  };
-};
-
-const AppStack = createStackNavigator(
-  {
-    Home: TabNavigator, // Bottom TabBar
-    ChatScreen: ChatScreen, // Chat screen with a contact
-    ContactScreen: ContactScreen, // Contact details
-    AddNewContactScreen: AddNewContactScreen, // Add a new contact
-  },
-  {
-    // initialRouteName: "Chats",
-    // initialRouteParams: 'denem',
-    defaultNavigationOptions: {
-      ...topBarStyle,
-    }
+class AppContainerBase extends Component {
+  render() {
+    const { match } = this.props;
+    return (
+      <View style={styles.container}>
+        <Switch>
+          <Redirect exact from={match.path} to={`${match.path}home`} />
+          <Route path="/home" component={Home} />
+          <Route path={`/${ROUTES.AUTH}`} component={Auth} />
+          <Route exact path={`/${ROUTES.CHAT_SCREEN}`} component={ChatScreen} />
+          <Route
+            exact
+            path={`/${ROUTES.CONTACT_SCREEN}`}
+            component={ContactScreen}
+          />
+          <Route
+            exact
+            path={`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`}
+            component={AddNewContactScreen}
+          />
+        </Switch>
+      </View>
+    );
   }
-);
-
-const AuthStack = createStackNavigator(
-  {
-    SignIn: {
-      screen: SignInScreen,
-      navigationOptions: () => ({
-      title: 'Sign In',
-      headerBackTitle: null
-    }),
-    },
-    SignUp: {
-      screen: SignUpScreen,
-      navigationOptions: () => ({
-      title: 'Sign Up',
-      headerBackTitle: null
-    }),
-    },
-  },
-  {
-    initialRouteName: "SignIn",
-    defaultNavigationOptions: {
-      ...topBarStyle,
-    }
-  }
-);
-
-const AppContainerBase = createAppContainer(createSwitchNavigator(
-  {
-    App: AppStack,
-    Auth: AuthStack,
-  },
-  {
-    initialRouteName: "App",
-  },
-));
+}
 
 const AppContainer = withAuthentication(AppContainerBase);
 
 export default class App extends React.Component {
   render() {
     return (
-      <FirebaseContext.Provider value={ new Firebase()}>
-        <AppContainer />
+      <FirebaseContext.Provider value={new Firebase()}>
+        <NativeRouter>
+          <BackButton>
+            <AppContainer />
+          </BackButton>
+        </NativeRouter>
       </FirebaseContext.Provider>
     );
   }
 }
 
-
-
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    color: 'red',
-  },
+    flex: 1
+  }
 });
