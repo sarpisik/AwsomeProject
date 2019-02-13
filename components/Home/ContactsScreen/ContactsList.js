@@ -3,10 +3,13 @@ import PropTypes from "prop-types";
 import { FlatList, View, Text, TouchableOpacity } from "react-native";
 import { Link } from "react-router-native";
 import * as ROUTES from "../../constants";
+import List from "../../List";
 
 // CONTACTS LIST
 export default class ContactsList extends Component {
   renderItem = ({ item }) => {
+    const profilePhoto =
+      item.photoUrl || require("../../../assets/profile_picture.png");
     return (
       <Link
         to={{
@@ -20,10 +23,11 @@ export default class ContactsList extends Component {
           }
         }}
       >
-        <View>
-          {/* Contact Name */}
-          <Text>{item.name}</Text>
-        </View>
+        <List
+          title={item.name}
+          subTitle={item.description}
+          image={profilePhoto}
+        />
       </Link>
     );
   };

@@ -1,16 +1,12 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import {
-  FlatList,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet
-} from "react-native";
+import { Text } from "react-native";
 
 import { withHeader } from "../../HOCs/withHeader";
 import { withAuthorization } from "../../Session";
 import * as ROUTES from "../../constants";
+import Profile, { Info } from "../../Profile";
+import Button from "../../Button";
 
 // SHOW CONTACT DETAILS
 class ContactScreen extends Component {
@@ -27,17 +23,20 @@ class ContactScreen extends Component {
       email: email,
       addedTime: addedTime,
       phoneNumber: phoneNumber,
+      isButtonLoading: false,
       error: null
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     const { authUser } = this.props;
     const { cid } = this.state;
-    this.setState({ isLoading: true });
+    await this.setState({ isLoading: true });
 
     // Look for an existing chat record
-    const chatRecord = authUser.messagesList.find(obj => obj.contactId === cid);
+    const chatRecord = await authUser.messagesList.find(
+      obj => obj.contactId === cid
+    );
 
     // If the chat record exist...
     chatRecord
@@ -49,94 +48,79 @@ class ContactScreen extends Component {
       : this.setState({ isLoading: false });
   }
 
-  renderItem = ({ item }) => {
-    // SHOW CONTACT INFO DETAILS
-    return (
-      <View>
-        <View style={styles.row}>
-          <Text style={styles.sender}>Name</Text>
-          <Text style={styles.sender}>{item.name}</Text>
-        </View>
+  onNavigate = (name, cid, chatPath) => {
+    const { history } = this.props;
 
-        <View style={styles.row}>
-          <Text style={styles.sender}>Email</Text>
-          <Text style={styles.sender}>{item.email}</Text>
-        </View>
+    history.push({
+      pathname: `/${ROUTES.CHAT_SCREEN}`,
+      state: {
+        contactName: name,
+        cid: cid,
+        path: chatPath
+      }
+    });
+  };
 
-        <View style={styles.row}>
-          <Text style={styles.sender}>Added Time</Text>
-          <Text style={styles.sender}>{item.addedTime}</Text>
-        </View>
+  onRemove = async key => {
+    const { authUser, firebase, history } = this.props;
 
-        <View style={styles.row}>
-          <Text style={styles.sender}>Phone</Text>
-          <Text style={styles.sender}>{item.phoneNumber}</Text>
-        </View>
-      </View>
-    );
+    try {
+      await this.setState({ isButtonLoading: true });
+      // Find contact in database
+      await firebase
+        .user(authUser.uid)
+        .child(`contactsList/${key}`)
+        .remove();
+
+      // Go previous screen
+      history.goBack();
+    } catch (error) {
+      this.setState({ error, isButtonLoading: false });
+    }
   };
 
   render() {
     const {
-      authUser,
-      firebase,
-      history,
       location: { state }
     } = this.props;
-    const { isLoading, name, cid, chatPath, error } = this.state;
+    const {
+      isLoading,
+      isButtonLoading,
+      name,
+      cid,
+      chatPath,
+      error
+    } = this.state;
 
     if (isLoading) return <Text>Loading...</Text>;
 
     return (
-      <View style={styles.container}>
-        <FlatList
-          data={[state]}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={this.renderItem}
+      <Profile
+        imageURL={state.photoURL || null}
+        userName={state.name}
+        status={state.status || "online"}
+      >
+        <Info
+          description={state.description || "No description"}
+          email={state.email}
+          creationTime={state.addedTime}
+          phone={state.phoneNumber}
         />
 
         {error && <Text>{error.message}</Text>}
 
         {/* OPEN CHAT SCREEN ON CLICK */}
-        <View style={styles.button}>
-          <TouchableOpacity
-            onPress={() =>
-              history.push({
-                pathname: `/${ROUTES.CHAT_SCREEN}`,
-                state: {
-                  contactName: name,
-                  cid: cid,
-                  path: chatPath
-                }
-              })
-            }
-          >
-            <Text style={styles.send}>Send a message</Text>
-          </TouchableOpacity>
-        </View>
-
+        <Button
+          title="Send a message"
+          onPress={() => this.onNavigate(name, cid, chatPath)}
+        />
         {/* REMOVE USER */}
-        <View style={styles.button}>
-          <TouchableOpacity
-            onPress={async () => {
-              try {
-                // Find contact in database
-                await firebase
-                  .user(authUser.uid)
-                  .child(`contactsList/${item.key}`)
-                  .remove();
-
-                // Go previous screen
-                history.goBack();
-              } catch (error) {
-                this.setState({ error });
-              }
-            }}
-          >
-            <Text style={styles.send}>{`Remove ${name}`}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        <Button
+          title={`Remove ${name}`}
+          loading={isButtonLoading}
+          onPress={() => this.onRemove(state.key)}
+        />
+      </Profile>
     );
   }
 }
@@ -158,28 +142,3 @@ ContactScreen.propTypes = {
     })
   })
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1
-  },
-  button: {
-    alignSelf: "stretch",
-    borderTopWidth: 1,
-    borderBottomColor: "lightseagreen"
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee"
-  },
-  send: {
-    alignSelf: "center",
-    color: "lightseagreen",
-    fontSize: 16,
-    fontWeight: "bold",
-    padding: 20
-  }
-});

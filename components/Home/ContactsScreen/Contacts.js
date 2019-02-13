@@ -1,14 +1,5 @@
 import React, { Component } from "react";
-import PropTypes from "prop-types";
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  Text,
-  TextInput,
-  Button,
-  TouchableOpacity
-} from "react-native";
+import { View, Button } from "react-native";
 import ContactsList from "./ContactsList";
 import * as ROUTES from "../../constants";
 
@@ -17,18 +8,15 @@ import * as ROUTES from "../../constants";
 // -AddNewContactScreen
 class Contacts extends Component {
   render() {
-    const { authUser, history } = this.props;
+    const { authUser } = this.props;
 
     return (
       <View style={{ justifyContent: "center" }}>
-        {authUser.mergedContactsList && (
+        {authUser.mergedContactsList ? (
           <ContactsList data={authUser.mergedContactsList} />
+        ) : (
+          <Text>You have no contact...</Text>
         )}
-
-        <Button
-          title="Add New Contact"
-          onPress={() => history.replace(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)}
-        />
       </View>
     );
   }

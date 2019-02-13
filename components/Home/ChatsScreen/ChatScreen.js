@@ -7,19 +7,24 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Image
+  KeyboardAvoidingView
 } from "react-native";
+import { Entypo } from "@expo/vector-icons";
 
 import { withAuthorization } from "../../Session";
 import Header from "../../HOCs/withHeader";
+import List from "../../List";
+
+const iconStyle = {
+  color: "#61dafb",
+  size: 25
+};
 
 const ShowMessages = ({ messagesList, renderItem, extraData }) => {
   return (
     <FlatList
       data={messagesList}
       extraData={extraData}
-      // removeClippedSubviews={false}
       keyExtractor={(item, index) => index.toString()}
       renderItem={renderItem}
       inverted
@@ -66,7 +71,6 @@ class ChatScreen extends Component {
     const messagesList = (isChatList && isChatList.messages) || [];
 
     if (messagesList !== state.messagesList) {
-      // this.handleReadMessage(messagesList[0]);
       return {
         messagesList: messagesList
       };
@@ -81,6 +85,7 @@ class ChatScreen extends Component {
 
     const getSentDate = new Date(item.createdAt).toLocaleDateString();
     const getSentTime = new Date(item.createdAt).toLocaleTimeString();
+    // The color of text depends on isRead value
     const textColor =
       item.userId === authUser.uid
         ? item.isRead === "true"
@@ -89,28 +94,13 @@ class ChatScreen extends Component {
         : styles.read;
 
     return (
-      <View style={styles.row}>
-        {/* Profile Photo */}
-        <Image style={styles.avatar} source={authUser.photoURL} />
-
-        {/* Message */}
-        <View style={styles.rowText}>
-          <View style={styles.senderRow}>
-            {/* Sender Name or ID */}
-            <Text style={styles.sender}>
-              {usersIDs[item.userId] || item.userId}
-            </Text>
-
-            {/* Sent Time */}
-            <Text style={styles.sender}>
-              {`${getSentDate} - ${getSentTime}`}
-            </Text>
-          </View>
-
-          {/* Text */}
-          <Text style={[styles.message, textColor]}>{item.text}</Text>
-        </View>
-      </View>
+      <List
+        title={usersIDs[item.userId] || item.userId}
+        subTitle={item.text}
+        image={authUser.photoURL}
+        date={`${getSentDate} - ${getSentTime}`}
+        read={textColor}
+      />
     );
   };
 
@@ -160,13 +150,7 @@ class ChatScreen extends Component {
   };
 
   onCreateMessage = async path => {
-    const {
-      firebase,
-      authUser,
-      location: {
-        state: { cid }
-      }
-    } = this.props;
+    const { firebase, authUser } = this.props;
 
     const messageObject = await {
       text: this.state.text,
@@ -186,7 +170,7 @@ class ChatScreen extends Component {
         }
       });
 
-    // Clear the inputfield after update
+    // Clear the input field after update
     this.setState({
       text: ""
     });
@@ -210,7 +194,7 @@ class ChatScreen extends Component {
   };
 
   handleReadMessage = cid => {
-    const { firebase, authUser } = this.props;
+    const { firebase } = this.props;
     const { chatPath, messagesList } = this.state;
 
     const contactUserMessages = messagesList.filter(
@@ -227,7 +211,6 @@ class ChatScreen extends Component {
 
   render() {
     const {
-      authUser,
       history,
       location: {
         state: { cid, contactName }
@@ -251,15 +234,18 @@ class ChatScreen extends Component {
             <TextInput
               value={text}
               style={styles.input}
+              multiline
+              textAlignVertical="top"
               underlineColorAndroid="transparent"
               placeholder="Type text"
+              placeholderTextColor="#61dafb"
               onChangeText={text => this.setState({ text })}
               onSubmitEditing={this.onSendMessage}
             />
 
             {/* SEND BUTTON */}
             <TouchableOpacity onPress={this.onSendMessage}>
-              <Text style={styles.send}>Send</Text>
+              <Entypo name="paper-plane" {...iconStyle} />
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -288,48 +274,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff"
   },
-  row: {
-    flexDirection: "row",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee"
-  },
-  avatar: {
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    marginRight: 10
-  },
   rowText: {
-    flex: 1
-  },
-  message: {
-    fontSize: 18
-  },
-  senderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between"
-  },
-  sender: {
-    fontWeight: "bold",
-    paddingRight: 10
-  },
-  footer: {
-    flexDirection: "row",
-    backgroundColor: "#eee"
-  },
-  input: {
-    paddingHorizontal: 20,
-    fontSize: 18,
     flex: 1
   },
   read: { color: "navy" },
   unRead: { color: "red" },
-  send: {
-    alignSelf: "center",
-    color: "lightseagreen",
-    fontSize: 16,
-    fontWeight: "bold",
+  footer: {
+    flexDirection: "row",
+    backgroundColor: "#222",
     padding: 20
+  },
+  input: {
+    color: "#61dafb",
+    paddingHorizontal: 20,
+    fontSize: 18,
+    flex: 1
   }
 });

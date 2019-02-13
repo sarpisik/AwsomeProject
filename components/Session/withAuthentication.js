@@ -4,6 +4,7 @@
 // THE AUTH STATE VIA withAuthorization HOC
 // TODO: CHECK PROPTYPES FOR EVERY COMPONENT
 // TODO: Set route goback for home screen
+// FIXME: Delayed fetch of username & email makes bug
 
 import React from "react";
 import { Text } from "react-native";

@@ -1,18 +1,9 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  Text,
-  TextInput,
-  Button,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Image
-} from "react-native";
+import { FlatList } from "react-native";
 import { Link } from "react-router-native";
 import * as ROUTES from "../../constants";
+import List from "../../List";
 
 // CHAT LIST
 class ChatList extends Component {
@@ -35,28 +26,13 @@ class ChatList extends Component {
           }
         }}
       >
-        <View style={styles.row}>
-          {/* Profile Photo */}
-          <Image style={styles.avatar} source={authUser.photoURL} />
-
-          {/* Chat */}
-          <View style={styles.rowText}>
-            <View style={styles.senderRow}>
-              {/* Contact Name */}
-              <Text style={styles.sender}>
-                {item.contactName || item.userEmail}
-              </Text>
-
-              {/* Sent Time */}
-              <Text style={styles.sender}>
-                {`${getSentDate} - ${getSentTime}`}
-              </Text>
-            </View>
-
-            {/* Latest Text */}
-            <Text style={styles.message}>{item.messages[0].text}</Text>
-          </View>
-        </View>
+        <List
+          title={item.name || item.userEmail}
+          subTitle={item.messages[0].text}
+          image={authUser.photoURL}
+          date={`${getSentDate} - ${getSentTime}`}
+          line={1}
+        />
       </Link>
     );
   };
@@ -83,32 +59,3 @@ class ChatList extends Component {
 }
 
 export default ChatList;
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee"
-  },
-  avatar: {
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    marginRight: 10
-  },
-  rowText: {
-    flex: 1
-  },
-  message: {
-    fontSize: 18
-  },
-  senderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between"
-  },
-  sender: {
-    fontWeight: "bold",
-    paddingRight: 10
-  }
-});

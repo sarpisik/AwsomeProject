@@ -1,41 +1,111 @@
-import React, { Component } from "react";
+import React from "react";
 import PropTypes from "prop-types";
-import { View, Text, TextInput } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { SearchBar, Icon } from "react-native-elements";
 
+import { compose } from "recompose";
 import { withHeader } from "../../HOCs/withHeader";
 import { withAuthorization } from "../../Session";
+import withForm from "../../HOCs/withForm";
 import * as ROUTES from "../../constants";
+import Profile from "../../Profile";
+import Button from "../../Button";
 
-// ADD NEW CONTACT
-class AddNewContactScreen extends Component {
-  constructor(props) {
-    super(props);
+const state = {
+  display: false,
+  email: "",
+  id: "",
+  name: "",
+  photoURL: "",
+  showLoading: false,
+  isButtonLoading: false,
+  error: null
+};
 
-    this.state = { email: "", error: null };
-  }
-  onSubmit = async () => {
-    const { authUser, firebase, history } = this.props;
+const AddNewContactScreen = ({ email, error, showLoading, ...props }) => {
+  const { authUser, firebase, history } = props;
 
-    const users = await firebase
-      .users()
-      .orderByChild("email")
-      .equalTo(this.state.email)
-      .once("value");
+  const updateSearch = email => props.onChange({ email: email, error: null });
 
-    const isUser = await users.val();
+  const showResult = (userObj, action) => {
+    const contactObject = {
+      id: userObj.id || userObj.cid,
+      email: userObj.email,
+      name: userObj.name,
+      photoURL: userObj.photoURL || ""
+    };
+    props.onChange({
+      showLoading: false,
+      display: true,
+      buttonAction: action,
+      ...contactObject
+    });
+  };
 
-    // If searched email does exist in the users database
-    if (isUser) {
-      const user = Object.values(isUser);
+  const onSearch = async () => {
+    if (email) {
+      await props.onChange({ showLoading: true });
+      let isContact = await authUser.mergedContactsList.find(
+        contactObj => contactObj.email === email
+      );
+
+      if (isContact) {
+        // Look for an existing chat record
+        const chatRecord = await authUser.messagesList.find(
+          obj => obj.contactId === isContact.cid
+        );
+        isContact.path = ((await chatRecord) && chatRecord.path) || null;
+
+        showResult(isContact, "send");
+      } else {
+        const users = await firebase
+          .users()
+          .orderByChild("email")
+          .equalTo(email)
+          .once("value");
+
+        const isUser = await users.val();
+        // If searched email does exist in the users database
+        if (isUser) {
+          let user = Object.values(isUser);
+          showResult(user[0], "add");
+        } else {
+          // Throw error if the searched email does not exist.
+          const error = {
+            message: "The email does not exist"
+          };
+
+          await props.onSubmit();
+          props.onChange({ showLoading: false, error });
+        }
+      }
+    }
+  };
+
+  const onSubmit = async () => {
+    await props.onChange({ isButtonLoading: true });
+
+    if (props.buttonAction === "send") {
+      await props.onSubmit();
+      history.push({
+        pathname: `/${ROUTES.CHAT_SCREEN}`,
+        state: {
+          contactName: props.name,
+          cid: props.id,
+          path: props.path
+        }
+      });
+    } else {
+      let contactObject = {
+        cid: props.id,
+        email: email,
+        addedTime: firebase.serverValue.TIMESTAMP
+      };
       // Save the searched user as a contact into authUser's contacts list
       const sendNewUser = await firebase
         .user(authUser.uid)
         .child("contactsList")
-        .push({
-          cid: user[0].id,
-          email: user[0].email,
-          addedTime: firebase.serverValue.TIMESTAMP
-        });
+        .push(contactObject);
 
       // Fetch updated contacts list
       const snapshot = await firebase
@@ -47,59 +117,82 @@ class AddNewContactScreen extends Component {
       const createdTime = await contacts[sendNewUser.key].addedTime;
 
       // Create this object to send contact details screen
-      const contactObject = await {
-        key: sendNewUser.key,
-        cid: user[0].id,
-        name: user[0].name,
-        email: user[0].email,
-        addedTime: new Date(createdTime).toUTCString()
-      };
+      contactObject.key = await sendNewUser.key;
+      contactObject.name = await props.name;
+      contactObject.addedTime = await new Date(createdTime).toUTCString();
 
       // Navigate to ContactScreen
+      await props.onSubmit();
       history.replace({
         pathname: `/${ROUTES.CONTACT_SCREEN}`,
         state: contactObject
       });
-    } else {
-      // Throw error if the searched email does not exist.
-      const error = {
-        message: "The email does not exist"
-      };
-
-      this.setState({ error });
     }
   };
 
-  render() {
-    const { email, error } = this.state;
+  return (
+    <View style={[styles.container, styles.backgroundColor]}>
+      <SearchBar
+        placeholder="Type Email..."
+        inputContainerStyle={styles.backgroundColor}
+        inputStyle={styles.inputColor}
+        searchIcon={styles.inputColor}
+        placeholderTextColor={styles.inputColor.color}
+        onChangeText={updateSearch}
+        value={email}
+        showLoading={showLoading}
+        onSubmitEditing={onSearch}
+      />
+      {props.display && (
+        <Profile imageURL={props.photoURL} userName={props.name}>
+          <Button
+            title={props.name || props.email}
+            icon={{
+              name: props.buttonAction,
+              size: 25,
+              color: styles.inputColor.color
+            }}
+            iconRight
+            iconContainerStyle={styles.icon}
+            onPress={onSubmit}
+            loading={props.isButtonLoading}
+          />
+        </Profile>
+      )}
+      {error && (
+        <Text style={[styles.inputColor, styles.text]}>{error.message}</Text>
+      )}
+    </View>
+  );
+};
 
-    return (
-      <View>
-        <Text style={{ padding: 10 }}>email : {email}</Text>
-        <TextInput
-          style={{
-            height: 40,
-            width: "80%",
-            borderColor: "gray",
-            borderWidth: 1,
-            padding: 10,
-            marginBottom: 20
-          }}
-          onChangeText={email => this.setState({ email })}
-          value={email}
-          onSubmitEditing={this.onSubmit}
-        />
-        {error && <Text>{error.message}</Text>}
-      </View>
-    );
-  }
-}
-
-export default withHeader({ title: "New Contact" })(
-  withAuthorization(AddNewContactScreen)
-);
+export default compose(
+  withForm(state),
+  withHeader({ title: "New Contact" }),
+  withAuthorization
+)(AddNewContactScreen);
 
 AddNewContactScreen.propTypes = {
   authUser: PropTypes.object.isRequired,
-  firebase: PropTypes.object.isRequired
+  firebase: PropTypes.object.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  },
+  backgroundColor: {
+    backgroundColor: "#222"
+  },
+  inputColor: {
+    color: "#61dafb"
+  },
+  text: {
+    flex: 1
+  },
+  icon: {
+    paddingLeft: 25
+  }
+});

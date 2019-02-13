@@ -6,8 +6,19 @@ import { withRouter } from "react-router-native";
 import { Header } from "react-native-elements";
 import { Entypo } from "@expo/vector-icons";
 
+const colors = {
+  text: "#61dafb",
+  background: "#222"
+};
+
+const iconStyle = {
+  color: colors.text,
+  size: 25
+};
+
 const containerStyle = {
   alignItems: "center",
+  backgroundColor: colors.background,
   height: "15%",
   maxHeight: 75,
   justifyContent: "center",
@@ -27,7 +38,7 @@ const buttonStyle = {
 };
 
 const textStyle = {
-  color: "#fff",
+  color: colors.text,
   fontWeight: "bold",
   fontSize: 20
 };
@@ -35,9 +46,9 @@ const textStyle = {
 class TopHeader extends PureComponent {
   goBack = () => this.props.history.goBack();
 
-  horizontalComponent = (name, size, onPress) => (
+  horizontalComponent = (name, onPress) => (
     <TouchableOpacity onPress={onPress} style={buttonStyle}>
-      <Entypo name={name} size={size} color="#fff" />
+      <Entypo name={name} {...iconStyle} />
     </TouchableOpacity>
   );
 
@@ -52,11 +63,7 @@ class TopHeader extends PureComponent {
       <Header
         containerStyle={containerStyle}
         centerContainerStyle={centerContainerStyle}
-        leftComponent={this.horizontalComponent(
-          "chevron-left",
-          20,
-          this.goBack
-        )}
+        leftComponent={this.horizontalComponent("chevron-left", this.goBack)}
         centerComponent={this.centerComponent(title)}
       />
     );
@@ -69,9 +76,9 @@ export const withHeader = ({ title = "" }) => WrappedComponent => {
   class WithHeader extends PureComponent {
     goBack = () => this.props.history.goBack();
 
-    horizontalComponent = (name, size, onPress) => (
+    horizontalComponent = (name, onPress) => (
       <TouchableOpacity onPress={onPress} style={buttonStyle}>
-        <Entypo name={name} size={size} color="#fff" />
+        <Entypo name={name} {...iconStyle} />
       </TouchableOpacity>
     );
 
@@ -88,12 +95,11 @@ export const withHeader = ({ title = "" }) => WrappedComponent => {
             centerContainerStyle={centerContainerStyle}
             leftComponent={this.horizontalComponent(
               "chevron-left",
-              20,
               this.goBack
             )}
             centerComponent={this.centerComponent(title)}
           />
-          <WrappedComponent />
+          <WrappedComponent {...this.props} />
         </View>
       );
     }
