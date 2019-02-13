@@ -1,13 +1,16 @@
 import React from "react";
 import { View, Image, Text, StyleSheet } from "react-native";
+import { Badge } from "react-native-elements";
 
 export default function List({
   title,
   subTitle,
   image,
   date,
+  fontStyle = { fontStyle: "italic" },
   read = { color: "black" },
-  line = 99
+  line = 99,
+  badge
 }) {
   return (
     <View style={styles.row}>
@@ -24,10 +27,21 @@ export default function List({
           <Text style={styles.sender}>{date}</Text>
         </View>
 
-        {/* Latest Text */}
-        <Text numberOfLines={line} style={[styles.message, read]}>
-          {subTitle}
-        </Text>
+        <View style={styles.senderRow}>
+          {/* Latest Text */}
+          <Text numberOfLines={line} style={[styles.message, read, fontStyle]}>
+            {subTitle}
+          </Text>
+          {badge > 0 && (
+            <Badge
+              containerStyle={styles.badgeContainer}
+              badgeStyle={styles.badgeStyle}
+              textStyle={styles.badgeText}
+              value={badge}
+              status="error"
+            />
+          )}
+        </View>
       </View>
     </View>
   );
@@ -38,7 +52,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#61dafb"
+    borderBottomColor: "#222"
   },
   avatar: {
     borderRadius: 20,
@@ -55,10 +69,19 @@ const styles = StyleSheet.create({
 
   senderRow: {
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    alignItems: "center"
   },
   sender: {
     fontWeight: "bold",
     paddingRight: 10
+  },
+  badgeContainer: { paddingRight: 10 },
+  badgeStyle: {
+    backgroundColor: "#61dafb"
+  },
+  badgeText: {
+    fontWeight: "bold",
+    color: "#222"
   }
 });

@@ -84,7 +84,11 @@ class ChatScreen extends Component {
     const { usersIDs } = this.state;
 
     const getSentDate = new Date(item.createdAt).toLocaleDateString();
-    const getSentTime = new Date(item.createdAt).toLocaleTimeString();
+    const currentDate = new Date().toLocaleDateString();
+    const showDate =
+      getSentDate !== currentDate
+        ? getSentDate
+        : new Date(item.createdAt).toLocaleTimeString();
     // The color of text depends on isRead value
     const textColor =
       item.userId === authUser.uid
@@ -98,8 +102,9 @@ class ChatScreen extends Component {
         title={usersIDs[item.userId] || item.userId}
         subTitle={item.text}
         image={authUser.photoURL}
-        date={`${getSentDate} - ${getSentTime}`}
+        date={showDate}
         read={textColor}
+        fontStyle={styles.text}
       />
     );
   };
@@ -276,6 +281,9 @@ const styles = StyleSheet.create({
   },
   rowText: {
     flex: 1
+  },
+  text: {
+    fontStyle: "normal"
   },
   read: { color: "navy" },
   unRead: { color: "red" },

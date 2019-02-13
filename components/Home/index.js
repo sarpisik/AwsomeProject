@@ -19,19 +19,19 @@ const iconStyle = {
 const pages = {
   [ROUTES.CHATS]: {
     component: Chats,
-    title: "Chats List",
+    title: "Chats",
     icon: "new-message",
     onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
   [ROUTES.CONTACTS]: {
     component: Contacts,
-    title: "Contacts List",
+    title: "Contacts",
     icon: "add-user",
     onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
   [ROUTES.ACCOUNT]: {
     component: Account,
-    title: "Account Details",
+    title: "Account",
     icon: "log-out",
     onPress: (history, firebase) => {
       firebase.doSignOut().then(() => {
@@ -105,17 +105,25 @@ export class Home extends Component {
         </View>
 
         <View style={styles.bottomTabBar}>
-          <Link style={styles.link} to={`${match.url}/${ROUTES.CHATS}`}>
+          <Link replace style={styles.link} to={`${match.url}/${ROUTES.CHATS}`}>
             {/* <Text style={styles.textLink}>Chat</Text> */}
             <Entypo name={"chat"} {...iconStyle} />
           </Link>
 
-          <Link style={styles.link} to={`${match.url}/${ROUTES.CONTACTS}`}>
+          <Link
+            replace
+            style={styles.link}
+            to={`${match.url}/${ROUTES.CONTACTS}`}
+          >
             {/* <Text style={styles.textLink}>Contacts</Text> */}
             <Entypo name={"users"} {...iconStyle} />
           </Link>
 
-          <Link style={styles.link} to={`${match.url}/${ROUTES.ACCOUNT}`}>
+          <Link
+            replace
+            style={styles.link}
+            to={`${match.url}/${ROUTES.ACCOUNT}`}
+          >
             {/* <Text style={styles.textLink}> Account </Text> */}
             <Entypo name={"user"} {...iconStyle} />
           </Link>

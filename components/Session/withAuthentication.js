@@ -3,8 +3,8 @@
 // WHICH IS CHILD OF TOP COMPONENT (APP.JS) CAN CONSUME
 // THE AUTH STATE VIA withAuthorization HOC
 // TODO: CHECK PROPTYPES FOR EVERY COMPONENT
-// TODO: Set route goback for home screen
-// FIXME: Delayed fetch of username & email makes bug
+// TODO: Set password change & reset
+// TODO: Create loading screen
 
 import React from "react";
 import { Text } from "react-native";

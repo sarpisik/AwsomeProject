@@ -9,12 +9,18 @@ import List from "../../List";
 class ChatList extends Component {
   renderItem = ({ item }) => {
     const { authUser } = this.props;
-    const getSentDate = new Date(
-      item.messages[0].createdAt
-    ).toLocaleDateString();
-    const getSentTime = new Date(
-      item.messages[0].createdAt
-    ).toLocaleTimeString();
+
+    const getSentDate = new Date(item.messages[0].createdAt).toLocaleDateString();
+    const currentDate = new Date().toLocaleDateString();
+    const showDate =
+      getSentDate !== currentDate
+        ? getSentDate
+        : new Date(item.messages[0].createdAt).toLocaleTimeString();
+
+    const unReadMessages = item.messages.filter(
+      textObj => textObj.userId !== authUser.uid && textObj.isRead === "false"
+    );
+
     return (
       <Link
         to={{
@@ -30,8 +36,9 @@ class ChatList extends Component {
           title={item.name || item.userEmail}
           subTitle={item.messages[0].text}
           image={authUser.photoURL}
-          date={`${getSentDate} - ${getSentTime}`}
+          date={showDate}
           line={1}
+          badge={unReadMessages.length}
         />
       </Link>
     );

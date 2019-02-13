@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { View, Text, StyleSheet } from "react-native";
-import { SearchBar, Icon } from "react-native-elements";
+import { SearchBar } from "react-native-elements";
 
 import { compose } from "recompose";
 import { withHeader } from "../../HOCs/withHeader";
