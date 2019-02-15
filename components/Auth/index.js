@@ -1,4 +1,3 @@
-// TODO: set password reset
 import React, { Component } from "react";
 import { View } from "react-native";
 import { Route, Switch } from "react-router-native";

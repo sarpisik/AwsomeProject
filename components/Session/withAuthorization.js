@@ -1,34 +1,36 @@
-import React from "react";
+import React from 'react'
 
 // React.createContext
-import { AuthUserContext } from "./index";
-import { withRouter } from "react-router-native";
-import { withFirebase } from "../Firebase";
-import { compose } from "recompose";
-import * as ROUTES from "../constants";
+import { AuthUserContext } from './index'
+import { withRouter } from 'react-router-native'
+import { withFirebase } from '../Firebase'
+import { compose } from 'recompose'
+import * as ROUTES from '../constants'
+import { LayoutAnimation } from 'react-native'
 
-const condition = authUser => authUser != null;
+const condition = authUser => authUser != null
 
 const withAuthorization = Component => {
   class WithAuthorization extends React.Component {
     componentDidMount() {
-      const { firebase, history } = this.props;
+      const { firebase, history } = this.props
       // If authUser does not exist then redirect to login page
       this.listener = firebase.onAuthUserListener(
         authUser => {
           if (!condition(authUser)) {
-            history.replace({ pathname: `/${ROUTES.AUTH}` });
+            history.replace({ pathname: `/${ROUTES.AUTH}` })
           }
         },
         () => history.replace({ pathname: `/${ROUTES.AUTH}` })
-      );
+      )
     }
 
     componentWillUnmount() {
-      this.listener();
+      this.listener()
     }
 
     render() {
+      LayoutAnimation.easeInEaseOut()
       return (
         <AuthUserContext.Consumer>
           {authUser =>
@@ -37,14 +39,14 @@ const withAuthorization = Component => {
             ) : null
           }
         </AuthUserContext.Consumer>
-      );
+      )
     }
   }
 
   return compose(
     withRouter,
     withFirebase
-  )(WithAuthorization);
-};
+  )(WithAuthorization)
+}
 
-export default withAuthorization;
+export default withAuthorization
