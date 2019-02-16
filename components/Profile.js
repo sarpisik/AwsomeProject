@@ -1,4 +1,4 @@
-import React, { PureComponent } from "react";
+import React, { PureComponent } from 'react'
 import {
   StyleSheet,
   SafeAreaView,
@@ -8,12 +8,14 @@ import {
   Image,
   ScrollView,
   Dimensions
-} from "react-native";
-import { Font } from "expo";
+} from 'react-native'
+import { Font } from 'expo'
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
+import Loading from './Loading'
 
-const IMAGE_SIZE = SCREEN_WIDTH - 80;
+const SCREEN_WIDTH = Dimensions.get('window').width
+
+const IMAGE_SIZE = SCREEN_WIDTH - 80
 
 export const Info = ({ description, email, creationTime, phone }) => {
   return (
@@ -43,35 +45,35 @@ export const Info = ({ description, email, creationTime, phone }) => {
         </View>
       </View>
     </>
-  );
-};
+  )
+}
 
 export default class Profile extends PureComponent {
   constructor(props) {
-    super(props);
+    super(props)
 
     this.state = {
       fontLoaded: false
-    };
+    }
   }
 
   async componentDidMount() {
-    this.mounted = true;
+    this.mounted = true
     await Font.loadAsync({
-      regular: require("../assets/fonts/Montserrat-Regular.ttf"),
-      light: require("../assets/fonts/Montserrat-Light.ttf"),
-      bold: require("../assets/fonts/Montserrat-Bold.ttf")
-    });
+      regular: require('../assets/fonts/Montserrat-Regular.ttf'),
+      light: require('../assets/fonts/Montserrat-Light.ttf'),
+      bold: require('../assets/fonts/Montserrat-Bold.ttf')
+    })
 
-    this.mounted && this.setState({ fontLoaded: true });
+    this.mounted && this.setState({ fontLoaded: true })
   }
 
   componentWillUnmount = () => {
-    this.mounted = false;
-  };
+    this.mounted = false
+  }
 
   render() {
-    const { imageURL, userName, status } = this.props;
+    const { imageURL, userName, status } = this.props
     return (
       <SafeAreaView style={{ flex: 1 }}>
         <StatusBar barStyle="light-content" />
@@ -81,7 +83,7 @@ export default class Profile extends PureComponent {
               {/* PROFILE PHOTO */}
               <View style={styles.imageContainer}>
                 <Image
-                  source={imageURL || require("../assets/profile_picture.png")}
+                  source={imageURL || require('../assets/profile_picture.png')}
                   style={styles.image}
                 />
               </View>
@@ -89,7 +91,7 @@ export default class Profile extends PureComponent {
               {/* NAME & STATUS/REQUEST */}
               <View style={styles.nameContainer}>
                 <Text style={styles.name}>{userName}</Text>
-                <Text style={[styles.name, { textAlign: "right" }]}>
+                <Text style={[styles.name, { textAlign: 'right' }]}>
                   {status}
                 </Text>
               </View>
@@ -97,19 +99,19 @@ export default class Profile extends PureComponent {
             </ScrollView>
           </View>
         ) : (
-          <Text>Loading...</Text>
+          <Loading />
         )}
       </SafeAreaView>
-    );
+    )
   }
   static defaultProps = {
     stranger: false
-  };
+  }
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#333" },
-  imageContainer: { justifyContent: "center", alignItems: "center" },
+  container: { flex: 1, backgroundColor: '#333' },
+  imageContainer: { justifyContent: 'center', alignItems: 'center' },
   image: {
     width: IMAGE_SIZE,
     height: IMAGE_SIZE,
@@ -117,17 +119,17 @@ const styles = StyleSheet.create({
   },
   nameContainer: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     marginTop: 20,
     marginHorizontal: 40,
-    justifyContent: "center",
-    alignItems: "center"
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   name: {
     flex: 1,
     fontSize: 26,
-    color: "#61dafb",
-    fontFamily: "bold"
+    color: '#61dafb',
+    fontFamily: 'bold'
   },
   descriptionContainer: {
     flex: 1,
@@ -138,35 +140,35 @@ const styles = StyleSheet.create({
   description: {
     flex: 1,
     fontSize: 15,
-    color: "white",
-    fontFamily: "regular"
+    color: 'white',
+    fontFamily: 'regular'
   },
   infoContainer: { flex: 1, marginTop: 30 },
   infoTitle: {
     flex: 1,
     fontSize: 15,
-    color: "#61dafb",
-    fontFamily: "regular",
+    color: '#61dafb',
+    fontFamily: 'regular',
     marginLeft: 40
   },
   infoSubContainer: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     marginTop: 20,
     marginHorizontal: 30
   },
-  rowLine: { flex: 1, flexDirection: "row" },
+  rowLine: { flex: 1, flexDirection: 'row' },
   infoTypeLabel: {
     fontSize: 15,
-    textAlign: "right",
-    color: "#61dafb",
-    fontFamily: "regular",
+    textAlign: 'right',
+    color: '#61dafb',
+    fontFamily: 'regular',
     paddingBottom: 10
   },
   infoAnswerLabel: {
     fontSize: 15,
-    color: "white",
-    fontFamily: "regular",
+    color: 'white',
+    fontFamily: 'regular',
     paddingBottom: 10
   }
-});
+})

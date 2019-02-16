@@ -7,6 +7,7 @@ import { withFirebase } from '../Firebase'
 import { compose } from 'recompose'
 import * as ROUTES from '../constants'
 import { LayoutAnimation } from 'react-native'
+import Loading from '../Loading'
 
 const condition = authUser => authUser != null
 
@@ -29,15 +30,16 @@ const withAuthorization = Component => {
       this.listener()
     }
 
+    onConditionRender = authUser =>
+      condition(authUser) ? (
+        <Component {...this.props} authUser={authUser} />
+      ) : null
+
     render() {
-      LayoutAnimation.easeInEaseOut()
+      // LayoutAnimation.easeInEaseOut()
       return (
         <AuthUserContext.Consumer>
-          {authUser =>
-            condition(authUser) ? (
-              <Component {...this.props} authUser={authUser} />
-            ) : null
-          }
+          {this.onConditionRender}
         </AuthUserContext.Consumer>
       )
     }

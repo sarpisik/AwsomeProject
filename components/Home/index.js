@@ -1,6 +1,12 @@
-import React, { Component } from 'react'
+import React, { PureComponent } from 'react'
 import { Route, Link, Switch, Redirect } from 'react-router-native'
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import {
+  Animated,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  View
+} from 'react-native'
 import { withAuthorization } from '../Session'
 import * as ROUTES from '../constants'
 
@@ -9,6 +15,8 @@ import { Entypo } from '@expo/vector-icons'
 import Contacts from './ContactsScreen'
 import Chats from './ChatsScreen'
 import Account from './Account'
+
+const SCREEN_WIDTH = Dimensions.get('window').width
 
 const iconStyle = {
   color: '#61dafb',
@@ -19,18 +27,21 @@ const iconStyle = {
 const pages = {
   [ROUTES.CHATS]: {
     component: Chats,
+    index: 0,
     title: 'Chats',
     icon: 'new-message',
     onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
   [ROUTES.CONTACTS]: {
     component: Contacts,
+    index: 1,
     title: 'Contacts',
     icon: 'add-user',
     onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
   [ROUTES.ACCOUNT]: {
     component: Account,
+    index: 2,
     title: 'Account',
     icon: 'log-out',
     onPress: (history, firebase) => {
@@ -46,10 +57,32 @@ const pages = {
 
 // Run page by referred link
 
-export class Home extends Component {
+export class Home extends PureComponent {
+  constructor(props) {
+    super(props)
+
+    // this.anim = new Animated.Value(0)
+  }
+
   RenderScreen = ({ match }) => {
     const { firebase, history } = this.props
     const linkedPage = pages[match.params.screenId]
+
+    // if (this.anim !== linkedPage.index) {
+    //   this.anim < linkedPage.index
+    //     ? (Animated.timing(this.anim, {
+    //         toValue: this.anim + 1,
+    //         duration: 1000,
+    //         useNativeDriver: true
+    //       }).start(),
+    //       this.anim.setValue(this.anim++))
+    //     : (Animated.timing(this.anim, {
+    //         toValue: this.anim - 1,
+    //         duration: 1000,
+    //         useNativeDriver: true
+    //       }).start(),
+    //       this.anim.setValue(this.anim--))
+    // }
 
     // HEADER BAR TITLE ON THE LEFT
     const leftComponent = title => ({
@@ -68,9 +101,22 @@ export class Home extends Component {
 
     // Component to render
     const Component = linkedPage.component
+    // const opacityScale = this.anim.interpolate({
+    //   inputRange: [0, 1],
+    //   outputRange: [0, 1]
+    // })
+    // const translateScale = this.anim.interpolate({
+    //   inputRange: [0, 1],
+    //   outputRange: [-SCREEN_WIDTH, 0]
+    // })
+    let transformStyle = {
+      ...styles.container,
+      // opacity: opacityScale,
+      // transform: [{ translateX: translateScale }]
+    }
 
     return (
-      <View style={styles.container}>
+      <View style={transformStyle}>
         <Header
           placement="left"
           containerStyle={styles.topBarContainer}
@@ -84,7 +130,20 @@ export class Home extends Component {
   }
 
   render() {
-    const { match } = this.props
+    const { match, history, location } = this.props
+
+    if (history.length > 1) {
+      history.entries.pop(history.length)
+      history.index = history.length - 1
+    } else if (
+      location.pathname === `${match.path}/${ROUTES.CHATS}` &&
+      history.length !== 1
+    ) {
+      history.entries.pop()
+      history.index = 0
+    }
+    // console.log('history ,', history)
+    // console.log('location ,', location)
 
     return (
       <View style={styles.container}>
@@ -107,19 +166,11 @@ export class Home extends Component {
             <Entypo name={'chat'} {...iconStyle} />
           </Link>
 
-          <Link
-            replace
-            style={styles.link}
-            to={`${match.url}/${ROUTES.CONTACTS}`}>
-            {/* <Text style={styles.textLink}>Contacts</Text> */}
+          <Link style={styles.link} to={`${match.url}/${ROUTES.CONTACTS}`}>
             <Entypo name={'users'} {...iconStyle} />
           </Link>
 
-          <Link
-            replace
-            style={styles.link}
-            to={`${match.url}/${ROUTES.ACCOUNT}`}>
-            {/* <Text style={styles.textLink}> Account </Text> */}
+          <Link style={styles.link} to={`${match.url}/${ROUTES.ACCOUNT}`}>
             <Entypo name={'user'} {...iconStyle} />
           </Link>
         </View>

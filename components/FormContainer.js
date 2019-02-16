@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { Input } from 'react-native-elements'
 import Button from './Button'
+import Loading from './Loading'
 
 import { Font } from 'expo'
 
@@ -71,9 +72,7 @@ export default class FormContainer extends PureComponent {
     } = this.props
     const { fontLoaded } = this.state
     return !fontLoaded ? (
-      <View>
-        <Text> Loading... </Text>
-      </View>
+      <Loading />
     ) : (
       <ScrollView
         scrollEnabled={false}

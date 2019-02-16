@@ -1,6 +1,8 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 import {
+  Animated,
+  Dimensions,
   StyleSheet,
   View,
   FlatList,
@@ -8,17 +10,19 @@ import {
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView
-} from "react-native";
-import { Entypo } from "@expo/vector-icons";
+} from 'react-native'
+import { Entypo } from '@expo/vector-icons'
 
-import { withAuthorization } from "../../Session";
-import Header from "../../HOCs/withHeader";
-import List from "../../List";
+import { withAuthorization } from '../../Session'
+import Header from '../../HOCs/withHeader'
+import List from '../../List'
+
+const SCREEN_WIDTH = Dimensions.get('window').width
 
 const iconStyle = {
-  color: "#61dafb",
+  color: '#61dafb',
   size: 25
-};
+}
 
 const ShowMessages = ({ messagesList, renderItem, extraData }) => {
   return (
@@ -29,35 +33,58 @@ const ShowMessages = ({ messagesList, renderItem, extraData }) => {
       renderItem={renderItem}
       inverted
     />
-  );
-};
+  )
+}
 
 ShowMessages.propTypes = {
   messagesList: PropTypes.array,
   renderItem: PropTypes.func.isRequired
-};
+}
 
 class ChatScreen extends Component {
   constructor(props) {
-    super(props);
+    super(props)
 
     const {
       authUser,
       location: {
         state: { contactName, cid, path }
       }
-    } = props;
+    } = props
 
     this.state = {
-      text: "",
+      text: '',
       messagesList: [],
       usersIDs: {
         [cid]: contactName,
         [authUser.uid]: authUser.name
       },
-      chatPath: path || "",
+      chatPath: path || '',
       error: null
-    };
+    }
+
+    this.anim = new Animated.Value(0)
+  }
+
+  componentDidMount = () => {
+    Animated.timing(this.anim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true
+    }).start()
+    console.log('this.anim ,', this.anim)
+  }
+
+  componentWillUnmount = async () => {
+    console.log('this.anim ,', this.anim)
+    await this.anim.setValue(1)
+    console.log('this.anim ,', this.anim)
+    await Animated.timing(this.anim, {
+      toValue: 0,
+      duration: 1000,
+      useNativeDriver: true
+    }).start()
+    console.log('this.anim ,', this.anim)
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -66,36 +93,36 @@ class ChatScreen extends Component {
       location: {
         state: { cid }
       }
-    } = props;
-    const isChatList = authUser.messagesList.find(obj => obj.contactId === cid);
-    const messagesList = (isChatList && isChatList.messages) || [];
+    } = props
+    const isChatList = authUser.messagesList.find(obj => obj.contactId === cid)
+    const messagesList = (isChatList && isChatList.messages) || []
 
     if (messagesList !== state.messagesList) {
       return {
         messagesList: messagesList
-      };
+      }
     }
-    return null;
+    return null
   }
 
   // Display messages in ShowMessages component
   renderItem = ({ item }) => {
-    const { authUser } = this.props;
-    const { usersIDs } = this.state;
+    const { authUser } = this.props
+    const { usersIDs } = this.state
 
-    const getSentDate = new Date(item.createdAt).toLocaleDateString();
-    const currentDate = new Date().toLocaleDateString();
+    const getSentDate = new Date(item.createdAt).toLocaleDateString()
+    const currentDate = new Date().toLocaleDateString()
     const showDate =
       getSentDate !== currentDate
         ? getSentDate
-        : new Date(item.createdAt).toLocaleTimeString();
+        : new Date(item.createdAt).toLocaleTimeString()
     // The color of text depends on isRead value
     const textColor =
       item.userId === authUser.uid
-        ? item.isRead === "true"
+        ? item.isRead === 'true'
           ? styles.read
           : styles.unRead
-        : styles.read;
+        : styles.read
 
     return (
       <List
@@ -106,8 +133,8 @@ class ChatScreen extends Component {
         read={textColor}
         fontStyle={styles.text}
       />
-    );
-  };
+    )
+  }
 
   // On press Send button or submit input
   onSendMessage = async () => {
@@ -117,14 +144,14 @@ class ChatScreen extends Component {
       location: {
         state: { cid, path }
       }
-    } = this.props;
-    const { usersIDs } = this.state;
+    } = this.props
+    const { usersIDs } = this.state
 
-    let chatPath = path || this.state.path;
+    let chatPath = path || this.state.path
 
     // Use chat path if it exist already
     if (chatPath) {
-      this.onCreateMessage(chatPath);
+      this.onCreateMessage(chatPath)
     } else {
       // If there is no chatPath already
       // create new chat object in messages database
@@ -134,85 +161,85 @@ class ChatScreen extends Component {
           chatCreatedDate: firebase.serverValue.TIMESTAMP
         },
         error => error && this.setState({ error })
-      );
+      )
 
       // And also save this path into the both users database
       // for later uses
       // First save the path into authUser's database
-      await this.createChatObjectForUser(authUser.uid, cid, newChatPath.key);
+      await this.createChatObjectForUser(authUser.uid, cid, newChatPath.key)
       // Then save the path into contact's database
-      await this.createChatObjectForUser(cid, authUser.uid, newChatPath.key);
+      await this.createChatObjectForUser(cid, authUser.uid, newChatPath.key)
 
       // Store the new chat object's path in the state for reusebility
       await this.setState({
         path: newChatPath.key
-      });
+      })
 
       // Then use the path of new created chat object
       // to interact in every messages
-      this.onCreateMessage(this.state.path);
+      this.onCreateMessage(this.state.path)
     }
-  };
+  }
 
   onCreateMessage = async path => {
-    const { firebase, authUser } = this.props;
+    const { firebase, authUser } = this.props
 
     const messageObject = await {
       text: this.state.text,
       userId: authUser.uid,
-      isRead: "false",
+      isRead: 'false',
       createdAt: firebase.serverValue.TIMESTAMP
-    };
+    }
 
     await firebase
       .message(path)
-      .child("messages")
+      .child('messages')
       .push(messageObject, error => {
         if (error) {
-          this.setState({ error });
+          this.setState({ error })
         } else {
-          console.log("Message Sent!");
+          console.log('Message Sent!')
         }
-      });
+      })
 
     // Clear the input field after update
     this.setState({
-      text: ""
-    });
-  };
+      text: ''
+    })
+  }
 
   createChatObjectForUser = (userId, contactId, path) => {
-    const { firebase } = this.props;
+    const { firebase } = this.props
 
     // Prepare the object which will send to
     // user's specified database
     const newChatObjectRecord = {
       contactId: contactId,
       path: path
-    };
+    }
 
     // Then connect to userId's database
-    const currentUser = firebase.user(userId).child("chatList");
+    const currentUser = firebase.user(userId).child('chatList')
 
     // and save the new object in messages record array
-    currentUser.push(newChatObjectRecord);
-  };
+    currentUser.push(newChatObjectRecord)
+  }
 
   handleReadMessage = cid => {
-    const { firebase } = this.props;
-    const { chatPath, messagesList } = this.state;
+    const { firebase } = this.props
+    const { chatPath, messagesList } = this.state
 
     const contactUserMessages = messagesList.filter(
       messageObject =>
-        messageObject.userId === cid && messageObject.isRead === "false"
-    );
+        messageObject.userId === cid && messageObject.isRead === 'false'
+    )
     contactUserMessages.forEach(messageObject => {
       firebase
         .message(chatPath)
         .child(`messages/${messageObject.key}/isRead`)
-        .set("true");
-    });
-  };
+        .set('true')
+    })
+  }
 
   render() {
     const {
@@ -220,11 +247,24 @@ class ChatScreen extends Component {
       location: {
         state: { cid, contactName }
       }
-    } = this.props;
-    const { text, error, messagesList } = this.state;
-    this.handleReadMessage(cid);
+    } = this.props
+    const { text, error, messagesList } = this.state
+    const opacityScale = this.anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1]
+    })
+    const translateScale = this.anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-SCREEN_WIDTH, 0]
+    })
+    let transformStyle = {
+      ...styles.container,
+      opacity: opacityScale,
+      transform: [{ translateX: translateScale }]
+    }
+    this.handleReadMessage(cid)
     return (
-      <View style={styles.container}>
+      <Animated.View style={transformStyle}>
         <Header title={contactName} history={history} />
         {/* DISPLAY MESSAGES */}
         <ShowMessages
@@ -257,12 +297,12 @@ class ChatScreen extends Component {
 
         {/* DISPLAY ERROR */}
         {error && <Text>{error.message}</Text>}
-      </View>
-    );
+      </Animated.View>
+    )
   }
 }
 
-export default withAuthorization(ChatScreen);
+export default withAuthorization(ChatScreen)
 
 ChatScreen.propTypes = {
   location: PropTypes.shape({
@@ -272,30 +312,30 @@ ChatScreen.propTypes = {
       path: PropTypes.string
     })
   })
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff"
+    backgroundColor: '#fff'
   },
   rowText: {
     flex: 1
   },
   text: {
-    fontStyle: "normal"
+    fontStyle: 'normal'
   },
-  read: { color: "navy" },
-  unRead: { color: "red" },
+  read: { color: 'navy' },
+  unRead: { color: 'red' },
   footer: {
-    flexDirection: "row",
-    backgroundColor: "#222",
+    flexDirection: 'row',
+    backgroundColor: '#222',
     padding: 20
   },
   input: {
-    color: "#61dafb",
+    color: '#61dafb',
     paddingHorizontal: 20,
     fontSize: 18,
     flex: 1
   }
-});
+})
