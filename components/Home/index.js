@@ -1,11 +1,15 @@
+// TODO: Config route on swipe
 import React, { PureComponent } from 'react'
 import { Route, Link, Switch, Redirect } from 'react-router-native'
 import {
+  FlatList,
   Animated,
+  TouchableWithoutFeedback,
   Dimensions,
   StyleSheet,
   TouchableOpacity,
-  View
+  View,
+  BackHandler
 } from 'react-native'
 import { withAuthorization } from '../Session'
 import * as ROUTES from '../constants'
@@ -16,32 +20,35 @@ import Contacts from './ContactsScreen'
 import Chats from './ChatsScreen'
 import Account from './Account'
 
-const SCREEN_WIDTH = Dimensions.get('window').width
+const { width } = Dimensions.get('window')
 
 const iconStyle = {
   color: '#61dafb',
   size: 25
 }
 
+const screensIndex = {
+  [`/${ROUTES.HOME}/${ROUTES.CHATS}`]: 0,
+  [`/${ROUTES.HOME}/${ROUTES.CONTACTS}`]: 1,
+  [`/${ROUTES.HOME}/${ROUTES.ACCOUNT}`]: 2
+}
+
 // Links for lazy load pages
-const pages = {
-  [ROUTES.CHATS]: {
+const screens = [
+  {
     component: Chats,
-    index: 0,
     title: 'Chats',
     icon: 'new-message',
     onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
-  [ROUTES.CONTACTS]: {
+  {
     component: Contacts,
-    index: 1,
     title: 'Contacts',
     icon: 'add-user',
     onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
-  [ROUTES.ACCOUNT]: {
+  {
     component: Account,
-    index: 2,
     title: 'Account',
     icon: 'log-out',
     onPress: (history, firebase) => {
@@ -53,7 +60,7 @@ const pages = {
       })
     }
   }
-}
+]
 
 // Run page by referred link
 
@@ -61,12 +68,57 @@ export class Home extends PureComponent {
   constructor(props) {
     super(props)
 
+    this.state = {
+      authUser: null,
+      history: null
+    }
     // this.anim = new Animated.Value(0)
   }
 
-  RenderScreen = ({ match }) => {
+  static getDerivedStateFromProps(props, state) {
+    const { authUser, history } = props
+
+    if (authUser !== state.authUser || history !== state.history) {
+      return {
+        authUser
+      }
+    }
+    return null
+  }
+
+  componentDidMount() {
+    const { match, history } = this.props
+
+    // Avoid scroll failed
+    history.location.pathname !== `${match.url}/${ROUTES.CHATS}` &&
+      setTimeout(() => {
+        this.onScrollToIndex(history.location.pathname, false)
+      }, 100)
+
+    // Prevent navigate back for android devices on back button press
+    this.backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // If user in chat list screen when pressed on back button
+      if (history.location.pathname === `${match.url}/${ROUTES.CHATS}`) {
+        // Then kill app
+        return false
+      }
+
+      // If user not in chat list screen when pressed back button
+      history.location.pathname !== `${match.url}/${ROUTES.CHATS}` &&
+        // navigate to chat list screen
+        this.onScrollToIndex(`${match.url}/${ROUTES.CHATS}`),
+        history.replace(`${match.url}/${ROUTES.CHATS}`)
+      return true
+    })
+  }
+
+  componentWillUnmount() {
+    this.backHandler.remove()
+  }
+
+  RenderScreen = ({ item }) => {
     const { firebase, history } = this.props
-    const linkedPage = pages[match.params.screenId]
+    // const linkedPage = pages[match.params.screenId]
 
     // if (this.anim !== linkedPage.index) {
     //   this.anim < linkedPage.index
@@ -100,7 +152,7 @@ export class Home extends PureComponent {
     )
 
     // Component to render
-    const Component = linkedPage.component
+    const Component = item.component
     // const opacityScale = this.anim.interpolate({
     //   inputRange: [0, 1],
     //   outputRange: [0, 1]
@@ -111,6 +163,7 @@ export class Home extends PureComponent {
     // })
     let transformStyle = {
       ...styles.container,
+      width
       // opacity: opacityScale,
       // transform: [{ translateX: translateScale }]
     }
@@ -121,27 +174,47 @@ export class Home extends PureComponent {
           placement="left"
           containerStyle={styles.topBarContainer}
           // centerContainerStyle={styles.centerContainer}
-          leftComponent={leftComponent(linkedPage.title)}
-          rightComponent={rightComponent(linkedPage.icon, linkedPage.onPress)}
+          leftComponent={leftComponent(item.title)}
+          rightComponent={rightComponent(item.icon, item.onPress)}
         />
         <Component {...this.props} />
       </View>
     )
   }
 
+  onViewableItemsChanged = ({ viewableItems, changed }) => {
+    // console.log('Visible items are', viewableItems)
+    // console.log('Changed in this iteration', changed)
+  }
+  viewabilityConfig = {
+    itemVisiblePercentThreshold: 50
+  }
+
+  onScrollToIndex = (path, animated = true) => {
+    const index = screensIndex[path]
+
+    // console.log(screensIndex[index])
+
+    this.flatListRef.scrollToIndex({
+      index: index,
+      animated: animated
+    })
+  }
+
   render() {
     const { match, history, location } = this.props
 
-    if (history.length > 1) {
-      history.entries.pop(history.length)
-      history.index = history.length - 1
-    } else if (
-      location.pathname === `${match.path}/${ROUTES.CHATS}` &&
-      history.length !== 1
-    ) {
-      history.entries.pop()
-      history.index = 0
-    }
+    // if (history.length > 1) {
+    //   history.entries.pop(history.length)
+    //   history.index = history.length - 1
+    // }
+    // else if (
+    //   location.pathname === `${match.path}/${ROUTES.CHATS}` &&
+    //   history.length !== 1
+    // ) {
+    //   history.entries.pop()
+    //   history.index = 0
+    // }
     // console.log('history ,', history)
     // console.log('location ,', location)
 
@@ -154,25 +227,66 @@ export class Home extends PureComponent {
               from={match.path}
               to={`${match.path}/${ROUTES.CHATS}`}
             />
+          </Switch>
+
+          <FlatList
+            data={screens}
+            extraData={this.state}
+            ref={ref => {
+              this.flatListRef = ref
+            }}
+            // onScrollToIndexFailed={() => {}}
+            horizontal
+            pagingEnabled
+            viewabilityConfig={this.viewabilityConfig}
+            onViewableItemsChanged={this.onViewableItemsChanged}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={this.RenderScreen}
+          />
+
+          {/* <Switch>
+            <Redirect
+              exact
+              from={match.path}
+              to={`${match.path}/${ROUTES.CHATS}`}
+            />
             <Route
               path={`${match.path}/:screenId`}
               component={this.RenderScreen}
             />
-          </Switch>
+          </Switch> */}
         </View>
 
         <View style={styles.bottomTabBar}>
-          <Link replace style={styles.link} to={`${match.url}/${ROUTES.CHATS}`}>
-            <Entypo name={'chat'} {...iconStyle} />
-          </Link>
-
-          <Link style={styles.link} to={`${match.url}/${ROUTES.CONTACTS}`}>
-            <Entypo name={'users'} {...iconStyle} />
-          </Link>
-
-          <Link style={styles.link} to={`${match.url}/${ROUTES.ACCOUNT}`}>
-            <Entypo name={'user'} {...iconStyle} />
-          </Link>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              this.onScrollToIndex(`${match.url}/${ROUTES.CHATS}`)
+              history.entries.pop()
+              history.index = 0
+              history.replace(`${match.url}/${ROUTES.CHATS}`)
+            }}>
+            <View style={styles.link}>
+              <Entypo name={'chat'} {...iconStyle} />
+            </View>
+          </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              this.onScrollToIndex(`${match.url}/${ROUTES.CONTACTS}`)
+              history.replace(`${match.url}/${ROUTES.CONTACTS}`)
+            }}>
+            <View style={styles.link}>
+              <Entypo name={'users'} {...iconStyle} />
+            </View>
+          </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback
+            onPress={() => {
+              this.onScrollToIndex(`${match.url}/${ROUTES.ACCOUNT}`)
+              history.replace(`${match.url}/${ROUTES.ACCOUNT}`)
+            }}>
+            <View style={styles.link}>
+              <Entypo name={'user'} {...iconStyle} />
+            </View>
+          </TouchableWithoutFeedback>
         </View>
       </View>
     )

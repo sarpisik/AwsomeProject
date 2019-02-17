@@ -15,7 +15,6 @@ const withForm = propState => Component => {
     onSubmit = () => this.setState({ ...propState });
 
     render() {
-      console.log("withform state ,", this.state);
       return (
         <Component
           {...this.props}

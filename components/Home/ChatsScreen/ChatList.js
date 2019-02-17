@@ -1,25 +1,27 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
-import { FlatList } from "react-native";
-import { Link } from "react-router-native";
-import * as ROUTES from "../../constants";
-import List from "../../List";
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+import { FlatList } from 'react-native'
+import { Link } from 'react-router-native'
+import * as ROUTES from '../../constants'
+import List from '../../List'
 
 // CHAT LIST
 class ChatList extends Component {
   renderItem = ({ item }) => {
-    const { authUser } = this.props;
+    const { authUser } = this.props
 
-    const getSentDate = new Date(item.messages[0].createdAt).toLocaleDateString();
-    const currentDate = new Date().toLocaleDateString();
+    const getSentDate = new Date(
+      item.messages[0].createdAt
+    ).toLocaleDateString()
+    const currentDate = new Date().toLocaleDateString()
     const showDate =
       getSentDate !== currentDate
         ? getSentDate
-        : new Date(item.messages[0].createdAt).toLocaleTimeString();
+        : new Date(item.messages[0].createdAt).toLocaleTimeString()
 
     const unReadMessages = item.messages.filter(
-      textObj => textObj.userId !== authUser.uid && textObj.isRead === "false"
-    );
+      textObj => textObj.userId !== authUser.uid && textObj.isRead === 'false'
+    )
 
     return (
       <Link
@@ -30,8 +32,7 @@ class ChatList extends Component {
             cid: item.contactId,
             path: item.path
           }
-        }}
-      >
+        }}>
         <List
           title={item.name || item.userEmail}
           subTitle={item.messages[0].text}
@@ -41,28 +42,28 @@ class ChatList extends Component {
           badge={unReadMessages.length}
         />
       </Link>
-    );
-  };
+    )
+  }
 
   render() {
-    const { data } = this.props;
+    const { data } = this.props
 
     // authUser's list of messages to display.
-    let messagesList = [...data];
+    let messagesList = [...data]
 
     // Sort list by latest text at top
     messagesList.sort(
       (firstObj, secondObj) =>
         secondObj.messages[0].createdAt - firstObj.messages[0].createdAt
-    );
+    )
     return (
       <FlatList
         data={messagesList}
         keyExtractor={(item, index) => index.toString()}
         renderItem={this.renderItem}
       />
-    );
+    )
   }
 }
 
-export default ChatList;
+export default ChatList

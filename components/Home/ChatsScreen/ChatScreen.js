@@ -72,19 +72,15 @@ class ChatScreen extends Component {
       duration: 1000,
       useNativeDriver: true
     }).start()
-    console.log('this.anim ,', this.anim)
   }
 
   componentWillUnmount = async () => {
-    console.log('this.anim ,', this.anim)
     await this.anim.setValue(1)
-    console.log('this.anim ,', this.anim)
     await Animated.timing(this.anim, {
       toValue: 0,
       duration: 1000,
       useNativeDriver: true
     }).start()
-    console.log('this.anim ,', this.anim)
   }
 
   static getDerivedStateFromProps(props, state) {
