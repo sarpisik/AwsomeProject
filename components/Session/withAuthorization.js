@@ -14,25 +14,38 @@ const condition = authUser => authUser != null
 const withAuthorization = Component => {
   class WithAuthorization extends React.Component {
     componentDidMount() {
+      console.log('WithAuthorization mounted')
       const { firebase, history } = this.props
       // If authUser does not exist then redirect to login page
       this.listener = firebase.onAuthUserListener(
         authUser => {
           if (!condition(authUser)) {
-            history.replace({ pathname: `/${ROUTES.AUTH}` })
+            history.replace({ pathname: ROUTES.AUTH })
           }
         },
-        () => history.replace({ pathname: `/${ROUTES.AUTH}` })
+        () => history.replace({ pathname: ROUTES.AUTH })
       )
     }
 
     componentWillUnmount() {
+      console.log('WithAuthorization unmounted')
       this.listener()
     }
 
-    onConditionRender = authUser =>
+    onConditionRender = ({
+      authUser,
+      onLoader,
+      isLoadComplete,
+      isChatsLoadComplete
+    }) =>
       condition(authUser) ? (
-        <Component {...this.props} authUser={authUser} />
+        <Component
+          {...this.props}
+          authUser={authUser}
+          onLoader={onLoader}
+          isLoadComplete={isLoadComplete}
+          isChatsLoadComplete={isChatsLoadComplete}
+        />
       ) : null
 
     render() {

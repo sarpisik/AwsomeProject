@@ -1,6 +1,6 @@
-import app from "firebase/app";
-import "firebase/auth"; // *** Auth API ***
-import "firebase/database"; // *** Database API ***
+import firebase from 'firebase'
+import 'firebase/auth' // *** Auth API ***
+import 'firebase/database' // *** Database API ***
 
 // const config = {
 //   apiKey: process.env.REACT_APP_API_KEY,
@@ -11,48 +11,49 @@ import "firebase/database"; // *** Database API ***
 //   messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID
 // };
 const config = {
-  apiKey: "AIzaSyDcu6wm5aX8y7KMYLSA31q_p5gazw3JvHc",
-  authDomain: "awsomeproject-31e98.firebaseapp.com",
-  databaseURL: "https://awsomeproject-31e98.firebaseio.com",
-  projectId: "awsomeproject-31e98",
-  storageBucket: "awsomeproject-31e98.appspot.com",
-  messagingSenderId: "383349235809"
-};
+  apiKey: 'AIzaSyDcu6wm5aX8y7KMYLSA31q_p5gazw3JvHc',
+  authDomain: 'awsomeproject-31e98.firebaseapp.com',
+  databaseURL: 'https://awsomeproject-31e98.firebaseio.com',
+  projectId: 'awsomeproject-31e98',
+  storageBucket: 'awsomeproject-31e98.appspot.com',
+  messagingSenderId: '383349235809'
+}
 
 class Firebase {
   constructor() {
-    app.initializeApp(config);
+    // firebase.initializeApp(config)
+    !firebase.apps.length ? firebase.initializeApp(config) : firebase.app()
 
-    this.serverValue = app.database.ServerValue;
-    this.emailAuthProvider = app.auth.EmailAuthProvider;
-    this.auth = app.auth();
-    this.db = app.database();
+    this.serverValue = firebase.database.ServerValue
+    this.emailAuthProvider = firebase.auth.EmailAuthProvider
+    this.auth = firebase.auth()
+    this.db = firebase.database()
 
-    this.googleProvider = new app.auth.GoogleAuthProvider();
-    this.facebookProvider = new app.auth.FacebookAuthProvider();
+    this.googleProvider = new firebase.auth.GoogleAuthProvider()
+    this.facebookProvider = new firebase.auth.FacebookAuthProvider()
   }
 
   // *** Auth API ***
 
   // SignUp
   doCreateUserWithEmailAndPassword = (email, password) =>
-    this.auth.createUserWithEmailAndPassword(email, password);
+    this.auth.createUserWithEmailAndPassword(email, password)
 
   // Send Email Verification
   doSendEmailVerification = () =>
     this.auth.currentUser.sendEmailVerification({
       url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT
-    });
+    })
 
   // SignIn
   doSignInWithEmailAndPassword = (email, password) =>
-    this.auth.signInWithEmailAndPassword(email, password);
+    this.auth.signInWithEmailAndPassword(email, password)
 
   // SignIn via Google
-  doSignInWithGoogle = () => this.auth.signInWithPopup(this.googleProvider);
+  doSignInWithGoogle = () => this.auth.signInWithPopup(this.googleProvider)
 
   // SignIn via Facebook
-  doSignInWithFacebook = () => this.auth.signInWithPopup(this.facebookProvider);
+  doSignInWithFacebook = () => this.auth.signInWithPopup(this.facebookProvider)
 
   // *** Merge Auth and DB User API *** //
   onAuthUserListener = (next, fallback) =>
@@ -60,25 +61,23 @@ class Firebase {
       // If authUser exist...
       if (authUser) {
         // Then fetch the data
-        let snapshot = await this.user(authUser.uid).once("value");
-        const dbUser = await snapshot.val();
+        let snapshot = await this.user(authUser.uid).once('value')
+        const dbUser = await snapshot.val()
         const imageUrl = authUser.photoURL
           ? { uri: authUser.photoURL }
-          : require("../../assets/profile_picture.png");
+          : require('../../assets/profile_picture.png')
 
-        // If the authUser is a new account,
-        // then it has not initial contactsList
-        // and chatList.
+        // Set initial contacts & chatslist if this is a new account
         if (!dbUser.contactsList) {
           // Default Empty contactsList
-          dbUser.contactsList = {};
+          dbUser.contactsList = {}
         }
-        dbUser.mergedContactsList = [];
+        dbUser.mergedContactsList = []
         if (!dbUser.chatList) {
           // Default Empty contactsList
-          dbUser.chatList = {};
+          dbUser.chatList = {}
         }
-        dbUser.messagesList = [];
+        dbUser.messagesList = []
 
         // merge auth and db user
         authUser = {
@@ -89,67 +88,67 @@ class Firebase {
           phoneNumber: authUser.phoneNumber,
           photoURL: imageUrl,
           ...dbUser
-        };
+        }
 
-        next(authUser);
+        next(authUser)
       } else {
         // If the authUser doesn't exist, run second function argument
-        fallback();
+        fallback()
       }
-    });
+    })
 
   // SignOut
-  doSignOut = () => this.auth.signOut();
+  doSignOut = () => this.auth.signOut()
 
   // Send password reset link
-  doSendPasswordResetEmail = email => this.auth.sendPasswordResetEmail(email);
+  doSendPasswordResetEmail = email => this.auth.sendPasswordResetEmail(email)
 
   // Handle Account Sessions
   doHandleAccountSession = (mode, oobCode) => {
     switch (mode) {
-      case "resetPassword":
-        return this.auth.verifyPasswordResetCode(oobCode);
-        break;
-      case "recoverEmail":
-        return null;
-        break;
-      case "verifyEmail":
-        return this.auth.applyActionCode(oobCode);
-        break;
+      case 'resetPassword':
+        return this.auth.verifyPasswordResetCode(oobCode)
+        break
+      case 'recoverEmail':
+        return null
+        break
+      case 'verifyEmail':
+        return this.auth.applyActionCode(oobCode)
+        break
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   // Reset Password
   doPasswordReset = (oobCode, newPassword) =>
-    this.auth.confirmPasswordReset(oobCode, newPassword);
+    this.auth.confirmPasswordReset(oobCode, newPassword)
 
   // Update Name
   doUpdateName = name =>
-    this.auth.currentUser.updateProfile({ displayName: name });
+    this.auth.currentUser.updateProfile({ displayName: name })
 
   // Update Photo
   doUpdatePhoto = photoURL =>
-    this.auth.currentUser.updateProfile({ photoURL: photoURL });
+    this.auth.currentUser.updateProfile({ photoURL: photoURL })
 
   // Update Email
-  doUpdateEmail = email => this.auth.currentUser.updateEmail(email);
+  doUpdateEmail = email => this.auth.currentUser.updateEmail(email)
 
   // Update password
-  doPasswordUpdate = password => this.auth.currentUser.updatePassword(password);
+  doPasswordUpdate = password => this.auth.currentUser.updatePassword(password)
 
   // *** User API ***
-  user = uid => this.db.ref(`users/${uid}`);
+  user = uid => this.db.ref(`users/${uid}`)
 
-  users = () => this.db.ref("users");
+  users = () => this.db.ref('users')
 
-  searchUser = () => this.db.ref("users/{uid}/email");
+  searchUser = () => this.db.ref('users/{uid}/email')
 
   // *** DataBase API ***
-  message = uid => this.db.ref(`messages/${uid}`);
+  message = uid => this.db.ref(`messages/${uid}`)
 
-  messages = () => this.db.ref("messages");
+  messages = () => this.db.ref('messages')
 }
 
-export default Firebase;
+export default Firebase

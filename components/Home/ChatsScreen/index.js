@@ -1,6 +1,6 @@
-import Chats from './Chats';
-import ChatList from './ChatList';
-import ChatScreen from './ChatScreen';
+import Chats from './Chats'
+import ChatList from './ChatList'
+import ChatScreen from './ChatScreen'
 
-export default Chats;
-export { ChatScreen, ChatList };
+export default ChatList
+export { Chats, ChatScreen }

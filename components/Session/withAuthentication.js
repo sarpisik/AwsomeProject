@@ -7,6 +7,7 @@
 // TODO: Create loading screen
 
 import React from 'react'
+import { View } from 'react-native'
 import { withRouter } from 'react-router-native'
 
 // React.createContext
@@ -15,9 +16,11 @@ import { AuthUserContext } from './index'
 // FIREBASE HOC
 import { withFirebase } from '../Firebase'
 import withNotification from '../HOCs/withNotification'
+import withLoader from '../HOCs/withLoader'
 import { compose } from 'recompose'
 
-import Loading from '../Loading'
+const checker = (arr, obj) =>
+  arr.length >= Object.keys(obj).length ? true : false
 
 const withAuthentication = Component => {
   class WithAuthentication extends React.Component {
@@ -28,22 +31,22 @@ const withAuthentication = Component => {
       // componentDidMount checks for the auth user.
       this.state = {
         authUser: null,
-        isLoading: false
+        isMergedContactsListLoaded: false,
+        isMessagesListLoaded: false
       }
     }
 
     componentDidMount() {
       console.log('withAuthentication mounted')
-      const { firebase } = this.props
-
-      this.setState({ isLoading: true })
+      const { firebase, onLoader } = this.props
+      this.props.isLoadComplete || onLoader({ isLoadComplete: false })
 
       // Listen for changes in firebase for
       // authentication status of the current authUser
       this.listener = firebase.onAuthUserListener(
         async authUser => {
           // If the authUser exist, save it in state
-          await this.setState(state => ({ authUser, isLoading: false }))
+          await this.setState({ authUser })
           // Then start to listen for changes
           this.onListenChanges()
         },
@@ -51,7 +54,8 @@ const withAuthentication = Component => {
           // If there is no authUser, keep it null
           // so that private screens are protected
           // along this is null
-          this.setState({ authUser: null, isLoading: false })
+          this.setState({ authUser: null })
+          onLoader({ isLoadComplete: true })
         }
       )
     }
@@ -77,6 +81,17 @@ const withAuthentication = Component => {
     }
 
     onListenContactChanges = ref => {
+      const {
+        isMergedContactsListLoaded,
+        authUser: { contactsList, mergedContactsList }
+      } = this.state
+      let contactsCount = Object.keys(contactsList).length
+
+      // If authUser has no any contacts to display...
+      contactsCount ||
+        // Update the text of loading screen
+        this.props.onLoader({ isContactsLoadComplete: true })
+
       ref.on('child_added', async snapshot => {
         let contactObject = await snapshot.val()
 
@@ -89,6 +104,12 @@ const withAuthentication = Component => {
 
           return { authUser: state.authUser }
         })
+
+        isMergedContactsListLoaded ||
+          (mergedContactsList.length === contactsCount &&
+            this.setState({ isMergedContactsListLoaded: true }, () =>
+              this.props.onLoader({ isContactsLoadComplete: true })
+            ))
 
         this.onListenForUserInfoChanged(contactObject.cid, 'name')
         this.onListenForUserInfoChanged(contactObject.cid, 'email')
@@ -135,7 +156,16 @@ const withAuthentication = Component => {
 
     onListenChatChanges = ref => {
       const { firebase } = this.props
-      const { authUser } = this.state
+      const {
+        isMessagesListLoaded,
+        authUser,
+        authUser: { chatList, messagesList }
+      } = this.state
+
+      // If authUser has no any chats to display...
+      Object.keys(chatList).length ||
+        // Update the text of loading screen
+        this.props.onLoader({ isChatsLoadComplete: true })
 
       ref.on('child_added', async snapshot => {
         let chatObject = await snapshot.val()
@@ -150,8 +180,8 @@ const withAuthentication = Component => {
         )
 
         // If the user exist...
-        if (isUserExistInContactsList) {
-          // Then fetch its username and merge to the chatObject
+        if (isUserExistInContactsList && isUserExistInContactsList.name) {
+          // Then get its username and merge to the chatObject
           chatObject.contactName = isUserExistInContactsList.name
         } else {
           // If not, fetch user's email address to display so that authUser will know that this user is not in its contact list
@@ -164,12 +194,18 @@ const withAuthentication = Component => {
           chatObject.userEmail = await user.val()
         }
 
-        // chatObject is ready to send state
+        // chatObject is ready sending to state
         await this.setState(state => {
           // keep index of pushed chatObject
           index = state.authUser.messagesList.push(chatObject) - 1
           return { authUser: state.authUser }
         })
+
+        isMessagesListLoaded ||
+          (checker(messagesList, chatList) &&
+            this.setState({ isMessagesListLoaded: true }, () =>
+              this.props.onLoader({ isChatsLoadComplete: true })
+            ))
 
         // Start to listen for changes of this chatObject
         await this.onListenNewMessage(chatObject, index)
@@ -240,18 +276,26 @@ const withAuthentication = Component => {
           })
         })
     }
-    render() {
-      if (this.state.isLoading) return <Loading />
 
+    render() {
       return (
-        <AuthUserContext.Provider value={this.state.authUser}>
-          <Component {...this.props} />
+        <AuthUserContext.Provider
+          value={{
+            authUser: this.state.authUser,
+            onLoader: this.props.onLoader,
+            isChatsLoadComplete: this.props.isChatsLoadComplete,
+            isLoadComplete: this.props.isLoadComplete
+          }}>
+          <View style={{ flex: 1, backgroundColor: 'red' }}>
+            <Component {...this.props} />
+          </View>
         </AuthUserContext.Provider>
       )
     }
   }
 
   return compose(
+    withLoader,
     withFirebase,
     withRouter,
     withNotification

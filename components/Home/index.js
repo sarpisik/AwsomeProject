@@ -1,9 +1,6 @@
-// TODO: Config route on swipe
 import React, { PureComponent } from 'react'
-import { Route, Link, Switch, Redirect } from 'react-router-native'
 import {
   FlatList,
-  Animated,
   TouchableWithoutFeedback,
   Dimensions,
   StyleSheet,
@@ -17,7 +14,7 @@ import * as ROUTES from '../constants'
 import { Header } from 'react-native-elements'
 import { Entypo } from '@expo/vector-icons'
 import Contacts from './ContactsScreen'
-import Chats from './ChatsScreen'
+import ChatList from './ChatsScreen'
 import Account from './Account'
 
 const { width } = Dimensions.get('window')
@@ -27,58 +24,60 @@ const iconStyle = {
   size: 25
 }
 
-const screensIndex = {
-  [`/${ROUTES.HOME}/${ROUTES.CHATS}`]: 0,
-  [`/${ROUTES.HOME}/${ROUTES.CONTACTS}`]: 1,
-  [`/${ROUTES.HOME}/${ROUTES.ACCOUNT}`]: 2
-}
-
-// Links for lazy load pages
+// Screens to render in FlatList
 const screens = [
   {
-    component: Chats,
+    component: ChatList,
     title: 'Chats',
     icon: 'new-message',
-    onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
+    path: ROUTES.MAIN,
+    onPress: history =>
+      history.push(`${ROUTES.MAIN}${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
   {
     component: Contacts,
     title: 'Contacts',
     icon: 'add-user',
-    onPress: history => history.push(`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
+    path: `${ROUTES.MAIN}${ROUTES.CONTACTS}`,
+    onPress: history =>
+      history.push(`${ROUTES.MAIN}${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
   {
     component: Account,
     title: 'Account',
     icon: 'log-out',
+    path: `${ROUTES.MAIN}${ROUTES.ACCOUNT}`,
     onPress: (history, firebase) => {
       firebase.doSignOut().then(() => {
         history.entries = []
         history.index = -1
 
-        history.push(`/${ROUTES.AUTH}`)
+        history.push(ROUTES.AUTH)
       })
     }
   }
 ]
 
-// Run page by referred link
-
 export class Home extends PureComponent {
   constructor(props) {
     super(props)
+
+    this.viewabilityConfig = {
+      itemVisiblePercentThreshold: 50
+    }
 
     this.state = {
       authUser: null,
       history: null
     }
-    // this.anim = new Animated.Value(0)
   }
 
   static getDerivedStateFromProps(props, state) {
     const { authUser, history } = props
 
+    // If the async data changed or history of navigation changed...
     if (authUser !== state.authUser || history !== state.history) {
+      // Then update state
       return {
         authUser
       }
@@ -88,61 +87,45 @@ export class Home extends PureComponent {
 
   componentDidMount() {
     const { match, history } = this.props
+    console.log('Home mounted')
 
     // Avoid scroll failed
-    history.location.pathname !== `${match.url}/${ROUTES.CHATS}` &&
+    history.location.pathname !== match.path &&
       setTimeout(() => {
-        this.onScrollToIndex(history.location.pathname, false)
+        this.onScrollToIndex(0, false)
       }, 100)
 
     // Prevent navigate back for android devices on back button press
     this.backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       // If user in chat list screen when pressed on back button
-      if (history.location.pathname === `${match.url}/${ROUTES.CHATS}`) {
+      if (history.location.pathname === match.path) {
         // Then kill app
         return false
       }
 
       // If user not in chat list screen when pressed back button
-      history.location.pathname !== `${match.url}/${ROUTES.CHATS}` &&
+      history.location.pathname !== match.path &&
         // navigate to chat list screen
-        this.onScrollToIndex(`${match.url}/${ROUTES.CHATS}`),
-        history.replace(`${match.url}/${ROUTES.CHATS}`)
+        this.onScrollToIndex(0)
       return true
     })
   }
 
   componentWillUnmount() {
+    console.log('Home unmounted')
     this.backHandler.remove()
   }
 
   RenderScreen = ({ item }) => {
     const { firebase, history } = this.props
-    // const linkedPage = pages[match.params.screenId]
 
-    // if (this.anim !== linkedPage.index) {
-    //   this.anim < linkedPage.index
-    //     ? (Animated.timing(this.anim, {
-    //         toValue: this.anim + 1,
-    //         duration: 1000,
-    //         useNativeDriver: true
-    //       }).start(),
-    //       this.anim.setValue(this.anim++))
-    //     : (Animated.timing(this.anim, {
-    //         toValue: this.anim - 1,
-    //         duration: 1000,
-    //         useNativeDriver: true
-    //       }).start(),
-    //       this.anim.setValue(this.anim--))
-    // }
-
-    // HEADER BAR TITLE ON THE LEFT
+    // Screen title on the left
     const leftComponent = title => ({
       text: title.toUpperCase(),
       style: [styles.title, styles.color]
     })
 
-    // HEADER BAR ICON ON THE RIGHT
+    // Touchable Icon on the right
     const rightComponent = (name, onPress) => (
       <TouchableOpacity
         onPress={() => onPress(history, firebase)}
@@ -153,19 +136,10 @@ export class Home extends PureComponent {
 
     // Component to render
     const Component = item.component
-    // const opacityScale = this.anim.interpolate({
-    //   inputRange: [0, 1],
-    //   outputRange: [0, 1]
-    // })
-    // const translateScale = this.anim.interpolate({
-    //   inputRange: [0, 1],
-    //   outputRange: [-SCREEN_WIDTH, 0]
-    // })
-    let transformStyle = {
+
+    const transformStyle = {
       ...styles.container,
       width
-      // opacity: opacityScale,
-      // transform: [{ translateX: translateScale }]
     }
 
     return (
@@ -173,7 +147,6 @@ export class Home extends PureComponent {
         <Header
           placement="left"
           containerStyle={styles.topBarContainer}
-          // centerContainerStyle={styles.centerContainer}
           leftComponent={leftComponent(item.title)}
           rightComponent={rightComponent(item.icon, item.onPress)}
         />
@@ -182,19 +155,20 @@ export class Home extends PureComponent {
     )
   }
 
-  onViewableItemsChanged = ({ viewableItems, changed }) => {
-    // console.log('Visible items are', viewableItems)
-    // console.log('Changed in this iteration', changed)
+  onViewableItemsChanged = ({ viewableItems }) => {
+    const { history } = this.props
+    const {
+      index,
+      item: { path }
+    } = viewableItems[0]
+    index == 0 && history.entries.pop(), (history.index = 0)
+
+    // Update history entries on navigation
+    history.replace(path)
   }
-  viewabilityConfig = {
-    itemVisiblePercentThreshold: 50
-  }
 
-  onScrollToIndex = (path, animated = true) => {
-    const index = screensIndex[path]
-
-    // console.log(screensIndex[index])
-
+  onScrollToIndex = (index, animated = true) => {
+    // Scroll screen on swipe or on touched bottom navbar
     this.flatListRef.scrollToIndex({
       index: index,
       animated: animated
@@ -202,33 +176,9 @@ export class Home extends PureComponent {
   }
 
   render() {
-    const { match, history, location } = this.props
-
-    // if (history.length > 1) {
-    //   history.entries.pop(history.length)
-    //   history.index = history.length - 1
-    // }
-    // else if (
-    //   location.pathname === `${match.path}/${ROUTES.CHATS}` &&
-    //   history.length !== 1
-    // ) {
-    //   history.entries.pop()
-    //   history.index = 0
-    // }
-    // console.log('history ,', history)
-    // console.log('location ,', location)
-
     return (
       <View style={styles.container}>
         <View style={styles.screen}>
-          <Switch>
-            <Redirect
-              exact
-              from={match.path}
-              to={`${match.path}/${ROUTES.CHATS}`}
-            />
-          </Switch>
-
           <FlatList
             data={screens}
             extraData={this.state}
@@ -243,46 +193,20 @@ export class Home extends PureComponent {
             keyExtractor={(item, index) => index.toString()}
             renderItem={this.RenderScreen}
           />
-
-          {/* <Switch>
-            <Redirect
-              exact
-              from={match.path}
-              to={`${match.path}/${ROUTES.CHATS}`}
-            />
-            <Route
-              path={`${match.path}/:screenId`}
-              component={this.RenderScreen}
-            />
-          </Switch> */}
         </View>
 
         <View style={styles.bottomTabBar}>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              this.onScrollToIndex(`${match.url}/${ROUTES.CHATS}`)
-              history.entries.pop()
-              history.index = 0
-              history.replace(`${match.url}/${ROUTES.CHATS}`)
-            }}>
+          <TouchableWithoutFeedback onPress={() => this.onScrollToIndex(0)}>
             <View style={styles.link}>
               <Entypo name={'chat'} {...iconStyle} />
             </View>
           </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              this.onScrollToIndex(`${match.url}/${ROUTES.CONTACTS}`)
-              history.replace(`${match.url}/${ROUTES.CONTACTS}`)
-            }}>
+          <TouchableWithoutFeedback onPress={() => this.onScrollToIndex(1)}>
             <View style={styles.link}>
               <Entypo name={'users'} {...iconStyle} />
             </View>
           </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback
-            onPress={() => {
-              this.onScrollToIndex(`${match.url}/${ROUTES.ACCOUNT}`)
-              history.replace(`${match.url}/${ROUTES.ACCOUNT}`)
-            }}>
+          <TouchableWithoutFeedback onPress={() => this.onScrollToIndex(2)}>
             <View style={styles.link}>
               <Entypo name={'user'} {...iconStyle} />
             </View>

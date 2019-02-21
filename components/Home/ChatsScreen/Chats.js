@@ -5,16 +5,21 @@ import { View, Text } from 'react-native'
 import ChatList from './ChatList'
 
 class Chats extends Component {
-  onRenderList = list => list.messages.length > 0
+  state = {
+    isLoadComplete: false
+  }
 
   render() {
     const {
       authUser,
       authUser: { messagesList }
     } = this.props
+    const { isLoadComplete, onChange } = this.props
+
+    let ready = isLoadComplete && messagesList.every(this.onRenderList)
     return (
       <View style={{ flex: 1 }}>
-        {messagesList.every(this.onRenderList) ? (
+        {ready ? (
           <ChatList authUser={authUser} data={messagesList} />
         ) : (
           <Text>You have no messages</Text>

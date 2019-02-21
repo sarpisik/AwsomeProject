@@ -1,18 +1,18 @@
-import React, { PureComponent } from "react";
+import React, { PureComponent } from 'react'
 
 const withForm = propState => Component => {
   class WithForm extends PureComponent {
     constructor(props) {
-      super(props);
+      super(props)
 
       this.state = {
         ...propState
-      };
+      }
     }
 
-    onChange = obj => this.setState(obj);
+    onChange = obj => this.setState(obj)
 
-    onSubmit = () => this.setState({ ...propState });
+    onSubmit = () => this.setState({ ...propState })
 
     render() {
       return (
@@ -22,11 +22,11 @@ const withForm = propState => Component => {
           onChange={this.onChange}
           onSubmit={this.onSubmit}
         />
-      );
+      )
     }
   }
 
-  return WithForm;
-};
+  return WithForm
+}
 
-export default withForm;
+export default withForm

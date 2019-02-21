@@ -1,7 +1,8 @@
 // TODO: Animation between routes & sliding
 // TODO: Firebase confirmation
+// FIXME: Loading screen background bug.
 import React, { Component } from 'react'
-import { StyleSheet, View } from 'react-native'
+import { StyleSheet, Dimensions, View } from 'react-native'
 import {
   NativeRouter,
   Route,
@@ -20,32 +21,87 @@ import {
   AddNewContactScreen
 } from './components/Home/ContactsScreen'
 import PasswordChange from './components/Home/Account/PasswordChange'
+import { TransLeft } from './components/Animations'
+
+const subScreens = {
+  [`${ROUTES.MAIN}${ROUTES.CHAT_SCREEN}`]: {
+    component: ChatScreen
+  },
+  [`${ROUTES.MAIN}${ROUTES.CONTACT_SCREEN}`]: {
+    component: ContactScreen
+  },
+  [`${ROUTES.MAIN}${ROUTES.ADD_NEW_CONTACT_SCREEN}`]: {
+    component: AddNewContactScreen
+  },
+  [`${ROUTES.MAIN}${ROUTES.PASSWORD_CHANGE}`]: {
+    component: PasswordChange
+  }
+}
+
+const { width } = Dimensions.get('window')
+
+class Main extends Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      isVisible: false,
+      cacheScreen: null,
+      cacheData: null
+    }
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    const {
+      location,
+      location: { pathname }
+    } = props
+
+    if (subScreens[pathname])
+      return {
+        cacheScreen: subScreens[pathname].component,
+        cacheData: location.state,
+        isVisible: true
+      }
+    if (state.cacheScreen)
+      return {
+        isVisible: false
+      }
+
+    return null
+  }
+
+  render() {
+    const { isVisible, cacheScreen, cacheData } = this.state
+    const Screen = cacheScreen
+
+    return (
+      <View style={styles.container}>
+        <TransLeft
+          width={width / 6}
+          reverse={-1}
+          duration={500}
+          visible={!isVisible}>
+          <Home />
+        </TransLeft>
+        <TransLeft duration={350} visible={isVisible}>
+          {cacheScreen && <Screen state={cacheData} />}
+        </TransLeft>
+      </View>
+    )
+  }
+}
 
 class AppContainerBase extends Component {
   render() {
-    const { match } = this.props
+    const { match, history } = this.props
+    console.log('AppContainerBase Rendered history ,', history)
     return (
       <View style={styles.container}>
         <Switch>
-          <Redirect exact from={match.path} to={`${match.path}home`} />
-          <Route path="/home" component={Home} />
-          <Route path={`/${ROUTES.AUTH}`} component={Auth} />
-          <Route exact path={`/${ROUTES.CHAT_SCREEN}`} component={ChatScreen} />
-          <Route
-            exact
-            path={`/${ROUTES.CONTACT_SCREEN}`}
-            component={ContactScreen}
-          />
-          <Route
-            exact
-            path={`/${ROUTES.ADD_NEW_CONTACT_SCREEN}`}
-            component={AddNewContactScreen}
-          />
-          <Route
-            exact
-            path={`/${ROUTES.PASSWORD_CHANGE}`}
-            component={PasswordChange}
-          />
+          <Redirect exact from={match.path} to={ROUTES.MAIN} />
+          <Route path={ROUTES.MAIN} component={Main} />
+          <Route path={ROUTES.AUTH} component={Auth} />
         </Switch>
       </View>
     )
@@ -70,6 +126,7 @@ export default class App extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: '#fff'
   }
 })

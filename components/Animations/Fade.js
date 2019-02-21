@@ -1,11 +1,15 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 
-import { Animated, Dimensions } from 'react-native'
+import { Animated, StyleSheet } from 'react-native'
 
-const { width } = Dimensions.get('window')
-
-export default class TransRight extends PureComponent {
+export default class Fade extends PureComponent {
+  static defaultProps = {
+    duration: 300
+  }
+  static propTypes = {
+    duration: PropTypes.number
+  }
   constructor(props) {
     super(props)
     this.state = {
@@ -30,24 +34,24 @@ export default class TransRight extends PureComponent {
   }
 
   render() {
-    const { visible, style, children, ...rest } = this.props
+    const { visible, children, ...rest } = this.props
 
     const containerStyle = {
-      // opacity: this._visibility.interpolate({
-      //   inputRange: [0, 1],
-      //   outputRange: [0, 1]
-      // }),
+      opacity: this._visibility.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1]
+      }),
       transform: [
         {
-          translateX: this._visibility.interpolate({
+          scale: this._visibility.interpolate({
             inputRange: [0, 1],
-            outputRange: [-width, 0]
+            outputRange: [0.9, 1]
           })
         }
       ]
     }
 
-    const combinedStyle = [containerStyle, style]
+    const combinedStyle = [containerStyle, styles.container]
     return (
       <Animated.View
         style={this.state.visible ? combinedStyle : containerStyle}
@@ -57,3 +61,8 @@ export default class TransRight extends PureComponent {
     )
   }
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  }
+})

@@ -56,7 +56,7 @@ class SignUpScreenBase extends React.Component {
           LayoutAnimation.easeInEaseOut()
           this.setState({ isLoading: false })
           // Alert.alert('🎸', 'You rock');
-          history.replace({ pathname: `/${ROUTES.HOME}` })
+          history.replace({ pathname: ROUTES.MAIN })
         }, 1500)
       })
       .catch(error => {
@@ -146,7 +146,7 @@ class SignUpScreenBase extends React.Component {
 SignUpScreenBase.propTypes = {}
 
 const SignUpScreen = compose(
-  withHeader({ title: 'Create A New Account' }),
+  withHeader({ title: 'Create A New Account', goBackTo: ROUTES.AUTH }),
   withRouter,
   withFirebase
 )(SignUpScreenBase)

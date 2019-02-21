@@ -1,14 +1,61 @@
-import React, { Component } from 'react'
+import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 import { FlatList } from 'react-native'
 import { Link } from 'react-router-native'
 import * as ROUTES from '../../constants'
 import List from '../../List'
 
+checkList = list => (list.messages[0] ? true : false)
+
 // CHAT LIST
-class ChatList extends Component {
+class ChatList extends PureComponent {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      sortedMessagesList: []
+    }
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    const {
+      isChatsLoadComplete,
+      onLoader,
+      authUser: { messagesList, chatList }
+    } = props
+
+    // If authUser has no any chats to display...
+    Object.keys(chatList).length ||
+      // Then shut down loading screen
+      onLoader({ isLoadComplete: true })
+
+    // Conditions for initial rendering
+    if (isChatsLoadComplete && messagesList.every(checkList)) {
+      // Sort list by latest text at top
+      let sortedMessagesList = [...messagesList]
+      // sortedMessagesList.sort(
+      //   (firstObj, secondObj) =>
+      //     secondObj.messages[0].createdAt - firstObj.messages[0].createdAt
+      // )
+      return { sortedMessagesList }
+    }
+
+    if (isChatsLoadComplete && !messagesList.every(checkList)) {
+      let sortedMessagesList = []
+      return sortedMessagesList
+    }
+    return null
+  }
+
   renderItem = ({ item }) => {
     const { authUser } = this.props
+
+    // If the loading screen displaying...
+    this.props.isLoadComplete ||
+      // Then shut down loading screen
+      this.props.onLoader({
+        isLoadComplete: true
+      })
 
     const getSentDate = new Date(
       item.messages[0].createdAt
@@ -19,16 +66,16 @@ class ChatList extends Component {
         ? getSentDate
         : new Date(item.messages[0].createdAt).toLocaleTimeString()
 
-    const unReadMessages = item.messages.filter(
+    const unReadMessagesCount = item.messages.filter(
       textObj => textObj.userId !== authUser.uid && textObj.isRead === 'false'
-    )
+    ).length
 
     return (
       <Link
         to={{
-          pathname: `/${ROUTES.CHAT_SCREEN}`,
+          pathname: `${ROUTES.MAIN}${ROUTES.CHAT_SCREEN}`,
           state: {
-            contactName: item.contactName || item.userEmail,
+            contactName: item.name || item.userEmail,
             cid: item.contactId,
             path: item.path
           }
@@ -39,30 +86,23 @@ class ChatList extends Component {
           image={authUser.photoURL}
           date={showDate}
           line={1}
-          badge={unReadMessages.length}
+          badge={unReadMessagesCount}
         />
       </Link>
     )
   }
 
   render() {
-    const { data } = this.props
+    const { sortedMessagesList } = this.state
 
-    // authUser's list of messages to display.
-    let messagesList = [...data]
-
-    // Sort list by latest text at top
-    messagesList.sort(
-      (firstObj, secondObj) =>
-        secondObj.messages[0].createdAt - firstObj.messages[0].createdAt
-    )
-    return (
+    return sortedMessagesList.length > 0 ? (
       <FlatList
-        data={messagesList}
+        data={sortedMessagesList}
+        extraData={this.state}
         keyExtractor={(item, index) => index.toString()}
         renderItem={this.renderItem}
       />
-    )
+    ) : null
   }
 }
 

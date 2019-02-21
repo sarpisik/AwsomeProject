@@ -1,11 +1,21 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 
-import { Animated, Dimensions } from 'react-native'
+import { Animated, Easing, Dimensions, StyleSheet } from 'react-native'
 
 const { width } = Dimensions.get('window')
 
 export default class TransLeft extends PureComponent {
+  static defaultProps = {
+    duration: 300,
+    width: width,
+    reverse: 1
+  }
+  static propTypes = {
+    duration: PropTypes.number,
+    width: PropTypes.number,
+    reverse: PropTypes.number
+  }
   constructor(props) {
     super(props)
     this.state = {
@@ -24,30 +34,31 @@ export default class TransLeft extends PureComponent {
     Animated.timing(this._visibility, {
       toValue: nextProps.visible ? 1 : 0,
       duration: nextProps.duration
+      // easing: Easing.bezier(0.17, 0.67, 0.83, 0.67)
     }).start(() => {
       this.setState({ visible: nextProps.visible })
     })
   }
 
   render() {
-    const { visible, style, children, ...rest } = this.props
+    const { visible, children, width, reverse, ...rest } = this.props
 
     const containerStyle = {
-      opacity: this._visibility.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 1]
-      }),
+      // opacity: this._visibility.interpolate({
+      //   inputRange: [0, 1],
+      //   outputRange: [0, 1]
+      // }),
       transform: [
         {
           translateX: this._visibility.interpolate({
             inputRange: [0, 1],
-            outputRange: [width, 0]
+            outputRange: [width * reverse, 0]
           })
         }
       ]
     }
 
-    const combinedStyle = [containerStyle, style, { width }]
+    const combinedStyle = [containerStyle, styles.container]
     return (
       <Animated.View
         style={this.state.visible ? combinedStyle : containerStyle}
@@ -57,3 +68,13 @@ export default class TransLeft extends PureComponent {
     )
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: 0,
+    start: 0,
+    right: 0,
+    bottom: 0
+  }
+})

@@ -1,8 +1,6 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import {
-  Animated,
-  Dimensions,
   StyleSheet,
   View,
   FlatList,
@@ -16,8 +14,6 @@ import { Entypo } from '@expo/vector-icons'
 import { withAuthorization } from '../../Session'
 import Header from '../../HOCs/withHeader'
 import List from '../../List'
-
-const SCREEN_WIDTH = Dimensions.get('window').width
 
 const iconStyle = {
   color: '#61dafb',
@@ -47,9 +43,7 @@ class ChatScreen extends Component {
 
     const {
       authUser,
-      location: {
-        state: { contactName, cid, path }
-      }
+      state: { contactName, cid, path }
     } = props
 
     this.state = {
@@ -62,33 +56,12 @@ class ChatScreen extends Component {
       chatPath: path || '',
       error: null
     }
-
-    this.anim = new Animated.Value(0)
-  }
-
-  componentDidMount = () => {
-    Animated.timing(this.anim, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true
-    }).start()
-  }
-
-  componentWillUnmount = async () => {
-    await this.anim.setValue(1)
-    await Animated.timing(this.anim, {
-      toValue: 0,
-      duration: 1000,
-      useNativeDriver: true
-    }).start()
   }
 
   static getDerivedStateFromProps(props, state) {
     const {
       authUser,
-      location: {
-        state: { cid }
-      }
+      state: { cid }
     } = props
     const isChatList = authUser.messagesList.find(obj => obj.contactId === cid)
     const messagesList = (isChatList && isChatList.messages) || []
@@ -137,9 +110,7 @@ class ChatScreen extends Component {
     const {
       firebase,
       authUser,
-      location: {
-        state: { cid, path }
-      }
+      state: { cid, path }
     } = this.props
     const { usersIDs } = this.state
 
@@ -240,27 +211,12 @@ class ChatScreen extends Component {
   render() {
     const {
       history,
-      location: {
-        state: { cid, contactName }
-      }
+      state: { cid, contactName }
     } = this.props
     const { text, error, messagesList } = this.state
-    const opacityScale = this.anim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1]
-    })
-    const translateScale = this.anim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [-SCREEN_WIDTH, 0]
-    })
-    let transformStyle = {
-      ...styles.container,
-      opacity: opacityScale,
-      transform: [{ translateX: translateScale }]
-    }
     this.handleReadMessage(cid)
     return (
-      <Animated.View style={transformStyle}>
+      <View style={styles.container}>
         <Header title={contactName} history={history} />
         {/* DISPLAY MESSAGES */}
         <ShowMessages
@@ -293,7 +249,7 @@ class ChatScreen extends Component {
 
         {/* DISPLAY ERROR */}
         {error && <Text>{error.message}</Text>}
-      </Animated.View>
+      </View>
     )
   }
 }
@@ -301,12 +257,10 @@ class ChatScreen extends Component {
 export default withAuthorization(ChatScreen)
 
 ChatScreen.propTypes = {
-  location: PropTypes.shape({
-    state: PropTypes.shape({
-      cid: PropTypes.string.isRequired,
-      contactName: PropTypes.string.isRequired,
-      path: PropTypes.string
-    })
+  state: PropTypes.shape({
+    cid: PropTypes.string.isRequired,
+    contactName: PropTypes.string.isRequired,
+    path: PropTypes.string
   })
 }
 

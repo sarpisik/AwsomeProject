@@ -14,7 +14,8 @@ export default class Account extends Component {
     }
   }
 
-  onNavigate = path => this.props.history.push(`/${path}`)
+  onNavigate = () =>
+    this.props.history.push(`${ROUTES.MAIN}${ROUTES.PASSWORD_CHANGE}`)
 
   render() {
     const { authUser } = this.props
@@ -31,10 +32,7 @@ export default class Account extends Component {
           phone={authUser.phoneNumber}
         />
         {/* BUTTONS */}
-        <Button
-          title="Change Password"
-          onPress={() => this.onNavigate(ROUTES.PASSWORD_CHANGE)}
-        />
+        <Button title="Change Password" onPress={this.onNavigate} />
         <Button
           title="Reset Password"
           onPress={() => console.log('Not configured yet')}

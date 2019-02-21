@@ -45,7 +45,9 @@ const textStyle = {
 }
 
 class TopHeader extends PureComponent {
-  goBack = () => this.props.history.goBack()
+  goBack = () => {
+    this.props.history.goBack()
+  }
 
   horizontalComponent = (name, onPress) => (
     <TouchableOpacity onPress={onPress} style={buttonStyle}>
@@ -73,9 +75,20 @@ class TopHeader extends PureComponent {
 
 export default TopHeader
 
-export const withHeader = ({ title = '' }) => WrappedComponent => {
+export const withHeader = ({
+  title = '',
+  goBackTo = ''
+}) => WrappedComponent => {
   class WithHeader extends PureComponent {
-    goBack = () => this.props.history.goBack()
+    static propTypes = {
+      goBack: PropTypes.func,
+      title: PropTypes.string.isRequired
+    }
+
+    goBack = () => {
+      const { history } = this.props
+      goBackTo ? history.replace(goBackTo) : history.goBack()
+    }
 
     horizontalComponent = (name, onPress) => (
       <TouchableOpacity onPress={onPress} style={buttonStyle}>
@@ -106,8 +119,4 @@ export const withHeader = ({ title = '' }) => WrappedComponent => {
     }
   }
   return withRouter(WithHeader)
-}
-
-withHeader.propTypes = {
-  title: PropTypes.string.isRequired
 }
