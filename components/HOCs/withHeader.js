@@ -80,11 +80,6 @@ export const withHeader = ({
   goBackTo = ''
 }) => WrappedComponent => {
   class WithHeader extends PureComponent {
-    static propTypes = {
-      goBack: PropTypes.func,
-      title: PropTypes.string.isRequired
-    }
-
     goBack = () => {
       const { history } = this.props
       goBackTo ? history.replace(goBackTo) : history.goBack()
@@ -119,4 +114,8 @@ export const withHeader = ({
     }
   }
   return withRouter(WithHeader)
+}
+withHeader.propTypes = {
+  goBack: PropTypes.func,
+  title: PropTypes.string.isRequired
 }

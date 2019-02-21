@@ -47,16 +47,9 @@ class Auth extends Component {
 
   componentDidMount = () => {
     const { match, history } = this.props
-    console.log('auth mounted')
 
     // Prevent navigate back for android devices on back button press
     this.backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      console.log(
-        'history.location.pathname === match.path ,',
-        history.location.pathname === match.path
-      )
-      console.log('history.location.pathname ,', history.location.pathname)
-      console.log('match.path ,', match.path)
       // If user in chat list screen when pressed on back button
       if (history.location.pathname === match.path) {
         // Then kill app
@@ -72,7 +65,6 @@ class Auth extends Component {
   }
 
   componentWillUnmount() {
-    console.log('auth unmounted')
     this.backHandler.remove()
   }
 

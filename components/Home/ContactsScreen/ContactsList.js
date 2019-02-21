@@ -7,6 +7,23 @@ import List from '../../List'
 
 // CONTACTS LIST
 export default class ContactsList extends Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      contactsList: props.contacts
+    }
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    if (props.contacts !== state.contactsList) {
+      return {
+        contactsList: props.contacts
+      }
+    }
+    return null
+  }
+
   renderItem = ({ item }) => {
     const profilePhoto =
       item.photoUrl || require('../../../assets/profile_picture.png')
@@ -32,20 +49,16 @@ export default class ContactsList extends Component {
   }
 
   render() {
-    const { data } = this.props
+    // const { data } = this.props
 
     // authUser's list of contacts to display.
     // Use spread operator in every render
     // so that FlatList can be triggered to re-render
-    let contactsList = [...data]
-
-    // Sort list by contact's username
-    contactsList.sort((objOne, objTwo) => objOne.name - objTwo.name)
-
+    // let contactsList = [...data]
     return (
       <FlatList
-        data={contactsList}
-        extraData={contactsList}
+        data={this.state.contactsList || []}
+        extraData={this.state.contactsList}
         keyExtractor={(item, index) => index.toString()}
         renderItem={this.renderItem}
       />

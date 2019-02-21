@@ -13,7 +13,7 @@ import * as ROUTES from '../constants'
 
 import { Header } from 'react-native-elements'
 import { Entypo } from '@expo/vector-icons'
-import Contacts from './ContactsScreen'
+import { ContactsList } from './ContactsScreen'
 import ChatList from './ChatsScreen'
 import Account from './Account'
 
@@ -35,7 +35,7 @@ const screens = [
       history.push(`${ROUTES.MAIN}${ROUTES.ADD_NEW_CONTACT_SCREEN}`)
   },
   {
-    component: Contacts,
+    component: ContactsList,
     title: 'Contacts',
     icon: 'add-user',
     path: `${ROUTES.MAIN}${ROUTES.CONTACTS}`,
@@ -87,7 +87,6 @@ export class Home extends PureComponent {
 
   componentDidMount() {
     const { match, history } = this.props
-    console.log('Home mounted')
 
     // Avoid scroll failed
     history.location.pathname !== match.path &&
@@ -112,7 +111,6 @@ export class Home extends PureComponent {
   }
 
   componentWillUnmount() {
-    console.log('Home unmounted')
     this.backHandler.remove()
   }
 
