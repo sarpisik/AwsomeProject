@@ -12,6 +12,9 @@ function contactReducer(state = INITIAL_STATE, action) {
     case 'CONTACT_SET': {
       return applySetContact(state, action)
     }
+    case 'AUTH_USER_SET': {
+      return INITIAL_STATE
+    }
     default:
       return state
   }

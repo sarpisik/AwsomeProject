@@ -48,7 +48,7 @@ class ContactScreen extends Component {
       : this.setState({ isLoading: false })
   }
 
-  onNavigate = (name, cid, chatPath) => {
+  onNavigate = (name, cid, email, chatPath) => {
     const { history } = this.props
 
     history.push({
@@ -56,6 +56,7 @@ class ContactScreen extends Component {
       state: {
         contactName: name,
         cid: cid,
+        contactEmail: email,
         path: chatPath
       }
     })
@@ -85,6 +86,7 @@ class ContactScreen extends Component {
       isLoading,
       isButtonLoading,
       name,
+      email,
       cid,
       chatPath,
       error
@@ -109,7 +111,7 @@ class ContactScreen extends Component {
         {/* OPEN CHAT SCREEN ON CLICK */}
         <Button
           title="Send a message"
-          onPress={() => this.onNavigate(name, cid, chatPath)}
+          onPress={() => this.onNavigate(name, cid, email, chatPath)}
         />
         {/* REMOVE USER */}
         <Button

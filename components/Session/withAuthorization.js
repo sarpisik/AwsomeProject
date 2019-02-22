@@ -41,11 +41,14 @@ const withAuthorization = Component => {
 
   const mapStateToProps = state => ({
     authUser: state.sessionState.authUser,
-    contacts: state.contactState.contacts
+    contacts: state.contactState.contacts,
+    messages: state.messageState.messages,
+    limit: state.messageState.limit
   })
 
   const mapDispatchToProps = dispatch => ({
-    onSetContacts: contacts => dispatch({ type: 'CONTACT_SET', contacts })
+    onSetContacts: contacts => dispatch({ type: 'CONTACT_SET', contacts }),
+    onSetMessages: messages => dispatch({ type: 'MESSAGES_SET', messages })
   })
 
   return compose(

@@ -43,12 +43,12 @@ class ChatScreen extends Component {
 
     const {
       authUser,
-      state: { contactName, cid, path }
+      state: { contactName, cid, path, messagesList }
     } = props
 
     this.state = {
       text: '',
-      messagesList: [],
+      messagesList: messagesList || [],
       usersIDs: {
         [cid]: contactName,
         [authUser.uid]: authUser.name
@@ -60,15 +60,17 @@ class ChatScreen extends Component {
 
   static getDerivedStateFromProps(props, state) {
     const {
-      authUser,
+      messages,
       state: { cid }
     } = props
-    const isChatList = authUser.messagesList.find(obj => obj.contactId === cid)
-    const messagesList = (isChatList && isChatList.messages) || []
+
+    const isChatList = messages && messages.find(obj => obj.contactId === cid)
+
+    const messagesList = (isChatList && isChatList.messagesList) || []
 
     if (messagesList !== state.messagesList) {
       return {
-        messagesList: messagesList
+        messagesList
       }
     }
     return null
@@ -110,7 +112,7 @@ class ChatScreen extends Component {
     const {
       firebase,
       authUser,
-      state: { cid, path }
+      state: { cid, path, contactEmail }
     } = this.props
     const { usersIDs } = this.state
 
@@ -133,9 +135,19 @@ class ChatScreen extends Component {
       // And also save this path into the both users database
       // for later uses
       // First save the path into authUser's database
-      await this.createChatObjectForUser(authUser.uid, cid, newChatPath.key)
+      await this.createChatObjectForUser(
+        authUser.uid,
+        cid,
+        contactEmail,
+        newChatPath.key
+      )
       // Then save the path into contact's database
-      await this.createChatObjectForUser(cid, authUser.uid, newChatPath.key)
+      await this.createChatObjectForUser(
+        cid,
+        authUser.uid,
+        authUser.email,
+        newChatPath.key
+      )
 
       // Store the new chat object's path in the state for reusebility
       await this.setState({
@@ -175,13 +187,14 @@ class ChatScreen extends Component {
     })
   }
 
-  createChatObjectForUser = (userId, contactId, path) => {
+  createChatObjectForUser = (userId, contactId, email, path) => {
     const { firebase } = this.props
 
     // Prepare the object which will send to
     // user's specified database
     const newChatObjectRecord = {
       contactId: contactId,
+      contactEmail: email,
       path: path
     }
 
