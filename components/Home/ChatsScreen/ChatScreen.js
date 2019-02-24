@@ -7,7 +7,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  ActivityIndicator
 } from 'react-native'
 import { Entypo } from '@expo/vector-icons'
 
@@ -20,14 +21,14 @@ const iconStyle = {
   size: 25
 }
 
-const ShowMessages = ({ messagesList, renderItem, extraData }) => {
+const ShowMessages = ({ messagesList, renderItem, extraData, ...props }) => {
   return (
     <FlatList
       data={messagesList}
       extraData={extraData}
       keyExtractor={(item, index) => index.toString()}
       renderItem={renderItem}
-      inverted
+      {...props}
     />
   )
 }
@@ -54,8 +55,16 @@ class ChatScreen extends Component {
         [authUser.uid]: authUser.name
       },
       chatPath: path || '',
+      isLoading: false,
+      isFetchMessage: true,
       error: null
     }
+
+    this.viewabilityConfig = {
+      itemVisiblePercentThreshold: 50
+    }
+
+    this.isReadCount
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -74,6 +83,43 @@ class ChatScreen extends Component {
       }
     }
     return null
+  }
+
+  componentDidMount = () => {
+    this.state.chatPath && this.onReadMessage()
+  }
+
+  componentDidUpdate = (prevProps, prevState) => {
+    this.state.chatPath && this.onReadMessage()
+  }
+
+  onReadMessage = () => {
+    const {
+      firebase,
+      state: { cid }
+    } = this.props
+    const { chatPath, messagesList } = this.state
+
+    messagesList
+      .filter(
+        chatObject => chatObject.userId === cid && chatObject.isRead === 'false'
+      )
+      .forEach(chatObject => {
+        firebase
+          .message(chatPath)
+          .child(`messages/${chatObject.key}/isRead`)
+          .set('true', async error => {
+            if (error) {
+              console.log(error)
+            } else {
+              this.props.onReadMessages(
+                chatObject.index,
+                chatObject.key,
+                'true'
+              )
+            }
+          })
+      })
   }
 
   // Display messages in ShowMessages component
@@ -205,20 +251,45 @@ class ChatScreen extends Component {
     currentUser.push(newChatObjectRecord)
   }
 
-  handleReadMessage = cid => {
-    const { firebase } = this.props
-    const { chatPath, messagesList } = this.state
+  onViewableItemsChanged = ({ changed }) => {
+    this.state.isFetchMessage &&
+      changed[0].index === this.state.messagesList.length - 1 &&
+      this.state.messagesList.length >= this.props.limit &&
+      this.setState({ isLoading: true }, () => {
+        this.onLoadMoreData()
+      })
+  }
 
-    const contactUserMessages = messagesList.filter(
-      messageObject =>
-        messageObject.userId === cid && messageObject.isRead === 'false'
-    )
-    contactUserMessages.forEach(messageObject => {
-      firebase
-        .message(chatPath)
-        .child(`messages/${messageObject.key}/isRead`)
-        .set('true')
-    })
+  onLoadMoreData = () => {
+    this.props.firebase
+      .message(this.state.chatPath)
+      .child('messages')
+      .orderByChild('createdAt')
+      .endAt(
+        this.state.messagesList[this.state.messagesList.length - 1].createdAt
+      )
+      .limitToLast(this.props.limit)
+      .once('value', async snapshot => {
+        const chatObjectList = await snapshot.val()
+        const chatArrayList = Object.keys(chatObjectList)
+        let oldMessagesList = await chatArrayList.map(key => ({
+          ...chatObjectList[key],
+          key
+        }))
+        oldMessagesList.pop()
+        if (oldMessagesList.length > 0) {
+          this.setState(
+            {
+              isLoading: false
+            },
+            () => {
+              this.props.onLoadMessages(oldMessagesList, this.state.chatPath)
+            }
+          )
+        } else {
+          this.setState({ isLoading: false, isFetchMessage: false })
+        }
+      })
   }
 
   render() {
@@ -226,16 +297,22 @@ class ChatScreen extends Component {
       history,
       state: { cid, contactName }
     } = this.props
-    const { text, error, messagesList } = this.state
-    this.handleReadMessage(cid)
+    const { text, error, messagesList, isLoading } = this.state
+
     return (
       <View style={styles.container}>
         <Header title={contactName} history={history} />
+        {isLoading && (
+          <ActivityIndicator style={styles.spinner} size="large" color="#222" />
+        )}
         {/* DISPLAY MESSAGES */}
         <ShowMessages
           renderItem={this.renderItem}
-          extraData={this.state}
+          extraData={messagesList}
           messagesList={messagesList}
+          viewabilityConfig={this.viewabilityConfig}
+          onViewableItemsChanged={this.onViewableItemsChanged}
+          inverted
         />
 
         {/* INPUT FIELD */}
@@ -281,6 +358,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff'
+  },
+  spinner: {
+    position: 'absolute',
+    top: 75,
+    left: 0,
+    right: 0
   },
   rowText: {
     flex: 1

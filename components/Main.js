@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { StyleSheet, Dimensions, View } from 'react-native'
 import { withAuthorization } from './Session'
 import * as ROUTES from './constants'
+import Loading from './Loading'
 import Home from './Home'
 import { ChatScreen } from './Home/ChatsScreen'
 import { ContactScreen, AddNewContactScreen } from './Home/ContactsScreen'
@@ -23,19 +24,22 @@ const subScreens = {
   }
 }
 
+const INITIAL_STATE = {
+  isLoading: false,
+  isContactsLoaded: false,
+  isChatsLoaded: false,
+  isVisible: false,
+  cacheScreen: null,
+  cacheData: null
+}
+
 const { width } = Dimensions.get('window')
 
 class Main extends Component {
   constructor(props) {
     super(props)
 
-    this.state = {
-      isContactsLoaded: false,
-      isMessagesLoaded: false,
-      isVisible: false,
-      cacheScreen: null,
-      cacheData: null
-    }
+    this.state = INITIAL_STATE
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -60,8 +64,11 @@ class Main extends Component {
 
   componentDidMount = () => {
     const { firebase, authUser } = this.props
+    console.log('MAIN MOUNTED ,', this.state)
 
-    // References to Firebase Realtime Database
+    this.setState({ isLoading: true })
+
+    // References to Firebase Real time Database
     this.contactsListRef = firebase.user(authUser.uid).child('contactsList')
     this.chatsListRef = firebase.user(authUser.uid).child('chatList')
 
@@ -70,10 +77,28 @@ class Main extends Component {
     this.onListenChatChanges(this.chatsListRef)
   }
 
+  componentDidUpdate = () => {
+    const { isLoading, isContactsLoaded, isChatsLoaded } = this.state
+    const { authUser, messages } = this.props
+
+    if (isLoading) {
+      isContactsLoaded && isChatsLoaded && this.setState({ isLoading: false })
+      isContactsLoaded &&
+        messages &&
+        messages.length === Object.keys(authUser.chatList).length &&
+        this.setState({ isLoading: false })
+    }
+  }
+
+  componentWillUnmount = () => {
+    this.contactsListRef.off()
+    this.chatsListRef.off()
+    console.log('MAIN UN MOUNTED ,', this.state)
+  }
+
   onListenContactChanges = ref => {
     ref.on('value', snapshot => {
       const contactsObjectList = snapshot.val()
-      console.log('contactsObjectList ,', contactsObjectList)
 
       if (contactsObjectList) {
         const contactsArrayList = Object.keys(contactsObjectList)
@@ -98,11 +123,15 @@ class Main extends Component {
                   (objOne, objTwo) => objOne.name - objTwo.name
                 ),
                 // Then send list to Redux
-                this.props.onSetContacts(contactsList))
+                this.props.onSetContacts(contactsList),
+                this.state.isContactsLoaded ||
+                  this.setState({ isContactsLoaded: true }))
             })
         })
       } else if (contactsObjectList || this.props.contacts) {
         this.props.onSetContacts(null)
+      } else {
+        this.setState({ isContactsLoaded: true })
       }
     })
   }
@@ -111,60 +140,81 @@ class Main extends Component {
     ref.on('value', snapshot => {
       const messagesObjectList = snapshot.val()
 
+      // If user has chat records...
       if (messagesObjectList) {
         const messagesArrayList = Object.keys(messagesObjectList)
 
-        let length = messagesArrayList.length
-        // let messagesList = []
-
-        messagesArrayList.map(key => {
+        messagesArrayList.map(async (key, index) => {
           let message = messagesObjectList[key]
 
-          // message.messagesList = []
-          this.props.firebase
+          // First fetch old messages by limit count
+          const snapshot = await this.props.firebase
             .message(message.path)
             .child('messages')
             .orderByChild('createdAt')
             .limitToLast(this.props.limit)
-            .on('value', async snapshot => {
-              const chatObjectList = await snapshot.val()
-              const chatArrayList = Object.keys(chatObjectList)
+            .once('value')
+          const value = await snapshot.val()
+          // Initial messages count
+          const messagesCountToListen = await Object.keys(value).length
+          // let count = messagesCountToListen
+          message.index = index
+          message.messagesList = []
 
-              message.messagesList = chatArrayList
-                .map(key => ({
-                  ...chatObjectList[key],
-                  key
-                }))
-                .reverse()
+          await this.props.onSetChats(message)
 
-              // messagesList = message
-              length && length--
-              this.props.onSetMessages(message)
-              // length || this.props.onSetMessages(message)
-            })
+          // Second, listen for new messages and also limit fetch count to old messages count for init listening
+          const chatRef = this.props.firebase.message(message.path)
+          chatRef
+            .child('messages')
+            .orderByChild('createdAt')
+            .limitToLast(messagesCountToListen)
+            .on('child_added', async snapshot => {
+              let chatObject = await snapshot.val()
+              chatObject.key = await snapshot.key
+              chatObject.index = await index
+
+              await this.props.onSetMessages(chatObject, index)
+
+              chatObject.isRead === 'false' &&
+                (chatObject.userId === this.props.authUser.uid &&
+                  chatRef
+                    .child(`messages/${chatObject.key}/isRead`)
+                    .on('value', snapshot => {
+                      if (snapshot.val() === 'true') {
+                        console.log('child changed ,', snapshot.val())
+
+                        chatRef.child(`messages/${chatObject.key}/isRead`).off()
+                        this.props.onReadMessages(
+                          chatObject.index,
+                          chatObject.key,
+                          snapshot.val()
+                        )
+                      }
+                    }))
+                  })
         })
       } else if (messagesObjectList || this.props.messages) {
-        this.props.onSetMessages(null)
+        this.props.onResetChats()
+      } else {
+        this.setState({ isChatsLoaded: true })
       }
     })
   }
 
-  componentWillUnmount = () => {
-    this.contactsListRef.off()
-    this.chatsListRef.off()
-  }
-
   render() {
-    const { isVisible, cacheScreen, cacheData } = this.state
+    const { isLoading, isVisible, cacheScreen, cacheData } = this.state
     const Screen = cacheScreen
 
-    console.log('history from main ,', this.props.history)
-    return (
+    // console.log('history from main ,', this.props.history)
+    return isLoading ? (
+      <Loading />
+    ) : (
       <View style={styles.container}>
         <TransLeft
           width={width / 6}
           reverse={-1}
-          duration={500}
+          duration={350}
           visible={!isVisible}>
           <Home />
         </TransLeft>

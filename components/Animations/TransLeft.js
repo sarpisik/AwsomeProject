@@ -33,7 +33,8 @@ export default class TransLeft extends PureComponent {
     }
     Animated.timing(this._visibility, {
       toValue: nextProps.visible ? 1 : 0,
-      duration: nextProps.duration
+      duration: nextProps.duration,
+      useNativeDriver: true
       // easing: Easing.bezier(0.17, 0.67, 0.83, 0.67)
     }).start(() => {
       this.setState({ visible: nextProps.visible })

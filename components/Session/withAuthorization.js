@@ -48,7 +48,20 @@ const withAuthorization = Component => {
 
   const mapDispatchToProps = dispatch => ({
     onSetContacts: contacts => dispatch({ type: 'CONTACT_SET', contacts }),
-    onSetMessages: messages => dispatch({ type: 'MESSAGES_SET', messages })
+    onSetChats: chat =>
+      dispatch({
+        type: 'CHATS_SET',
+        chat
+      }),
+    onSetMessages: (message, index) =>
+      dispatch({ type: 'MESSAGES_SET', message, index }),
+    onLoadMessages: (messages, path) =>
+      dispatch({ type: 'MESSAGES_UPDATE', messages, path }),
+    onReadMessages: (index, key, isRead) =>
+      dispatch({ type: 'MESSAGES_READ', index, key, isRead }),
+    onSetMessagesLimit: limit =>
+      dispatch({ type: 'MESSAGES_LIMIT_SET', limit }),
+    onResetChats: () => dispatch({ type: 'RESET_CHATS' })
   })
 
   return compose(

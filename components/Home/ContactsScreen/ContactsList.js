@@ -11,7 +11,7 @@ export default class ContactsList extends Component {
     super(props)
 
     this.state = {
-      contactsList: props.contacts
+      contactsList: null
     }
   }
 
@@ -49,19 +49,20 @@ export default class ContactsList extends Component {
   }
 
   render() {
+    const { contactsList } = this.state
     // const { data } = this.props
 
     // authUser's list of contacts to display.
     // Use spread operator in every render
     // so that FlatList can be triggered to re-render
     // let contactsList = [...data]
-    return (
+    return contactsList ? (
       <FlatList
-        data={this.state.contactsList || []}
-        extraData={this.state.contactsList}
+        data={contactsList}
+        extraData={contactsList}
         keyExtractor={(item, index) => index.toString()}
         renderItem={this.renderItem}
       />
-    )
+    ) : null
   }
 }

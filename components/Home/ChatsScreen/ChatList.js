@@ -11,13 +11,22 @@ class ChatList extends PureComponent {
     super(props)
 
     this.state = {
-      messagesList: props.messages
+      chatsList: null
     }
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (props.messages !== state.messagesList) {
-      return { messagesList: props.messages }
+    if (
+      props.messages &&
+      props.messages !== state.chatsList &&
+      props.messages.every(obj => obj.messagesList.length > 0)
+    ) {
+      props.messages.sort(
+        (obj1, obj2) =>
+          obj2.messagesList[0].createdAt - obj1.messagesList[0].createdAt
+      )
+
+      return { chatsList: props.messages }
     }
 
     return null
@@ -72,11 +81,11 @@ class ChatList extends PureComponent {
   }
 
   render() {
-    const { messagesList } = this.state
-    if (messagesList)
+    const { chatsList } = this.state
+    if (chatsList && chatsList.length > 0)
       return (
         <FlatList
-          data={messagesList}
+          data={chatsList}
           extraData={this.state}
           keyExtractor={(item, index) => index.toString()}
           renderItem={this.renderItem}
