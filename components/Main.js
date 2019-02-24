@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { StyleSheet, Dimensions, View } from 'react-native'
 import { withAuthorization } from './Session'
+import withNotification from './HOCs/withNotification'
 import * as ROUTES from './constants'
 import Loading from './Loading'
 import Home from './Home'
@@ -8,6 +9,7 @@ import { ChatScreen } from './Home/ChatsScreen'
 import { ContactScreen, AddNewContactScreen } from './Home/ContactsScreen'
 import PasswordChange from './Home/Account/PasswordChange'
 import { TransLeft } from './Animations'
+import { compose } from 'recompose'
 
 const subScreens = {
   [`${ROUTES.MAIN}${ROUTES.CHAT_SCREEN}`]: {
@@ -27,7 +29,7 @@ const subScreens = {
 const INITIAL_STATE = {
   isLoading: false,
   isContactsLoaded: false,
-  isChatsLoaded: false,
+  isChatsLoadedEmpty: false,
   isVisible: false,
   cacheScreen: null,
   cacheData: null
@@ -72,17 +74,19 @@ class Main extends Component {
     this.contactsListRef = firebase.user(authUser.uid).child('contactsList')
     this.chatsListRef = firebase.user(authUser.uid).child('chatList')
 
-    // Listen changes in contacts list
+    // Listen changes for contacts & chats lists
     this.onListenContactChanges(this.contactsListRef)
     this.onListenChatChanges(this.chatsListRef)
   }
 
   componentDidUpdate = () => {
-    const { isLoading, isContactsLoaded, isChatsLoaded } = this.state
+    const { isLoading, isContactsLoaded, isChatsLoadedEmpty } = this.state
     const { authUser, messages } = this.props
 
     if (isLoading) {
-      isContactsLoaded && isChatsLoaded && this.setState({ isLoading: false })
+      isContactsLoaded &&
+        isChatsLoadedEmpty &&
+        this.setState({ isLoading: false })
       isContactsLoaded &&
         messages &&
         messages.length === Object.keys(authUser.chatList).length &&
@@ -140,7 +144,7 @@ class Main extends Component {
     ref.on('value', snapshot => {
       const messagesObjectList = snapshot.val()
 
-      // If user has chat records...
+      // If authUser has chat records...
       if (messagesObjectList) {
         const messagesArrayList = Object.keys(messagesObjectList)
 
@@ -174,30 +178,60 @@ class Main extends Component {
               chatObject.key = await snapshot.key
               chatObject.index = await index
 
+              // Dispatch the new message
               await this.props.onSetMessages(chatObject, index)
 
-              chatObject.isRead === 'false' &&
-                (chatObject.userId === this.props.authUser.uid &&
+              // If the message is unread and...
+              if (chatObject.isRead === 'false') {
+                // If the sender is authUser...
+                if (chatObject.userId === this.props.authUser.uid) {
                   chatRef
                     .child(`messages/${chatObject.key}/isRead`)
                     .on('value', snapshot => {
+                      // Listen until read
                       if (snapshot.val() === 'true') {
-                        console.log('child changed ,', snapshot.val())
-
+                        // Then stop listen
                         chatRef.child(`messages/${chatObject.key}/isRead`).off()
+                        // Dispatch read value for UI feedback
                         this.props.onReadMessages(
                           chatObject.index,
                           chatObject.key,
                           snapshot.val()
                         )
                       }
-                    }))
+                    })
+
+                  // If the sender is contact user...
+                } else {
+                  // Get name if it exists in contacts list
+                  const senderName =
+                    (await this.props.contacts.find(
+                      contact => contact.cid === chatObject.userId
+                    ).name) ||
+                    // If not get the email
+                    message.contactEmail
+
+                  // Throw notification of new message
+                  this.props.sendNotification({
+                    senderName: senderName,
+                    contactId: chatObject.userId,
+                    path: message.path,
+                    text: chatObject.text
                   })
+                }
+              }
+            })
         })
+
+        // If authUser removed all chats...
       } else if (messagesObjectList || this.props.messages) {
+        // Reset Redux
         this.props.onResetChats()
+
+        // If no chats exist on initial runnig
       } else {
-        this.setState({ isChatsLoaded: true })
+        // Trigger loading screen
+        this.setState({ isChatsLoadedEmpty: true })
       }
     })
   }
@@ -206,7 +240,6 @@ class Main extends Component {
     const { isLoading, isVisible, cacheScreen, cacheData } = this.state
     const Screen = cacheScreen
 
-    // console.log('history from main ,', this.props.history)
     return isLoading ? (
       <Loading />
     ) : (
@@ -226,7 +259,10 @@ class Main extends Component {
   }
 }
 
-export default withAuthorization(Main)
+export default compose(
+  withAuthorization,
+  withNotification
+)(Main)
 
 const styles = StyleSheet.create({
   container: {

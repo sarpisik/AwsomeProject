@@ -1,6 +1,6 @@
-import Chats from './Chats'
+import DisplayMessages from './DisplayMessages'
 import ChatList from './ChatList'
 import ChatScreen from './ChatScreen'
 
 export default ChatList
-export { Chats, ChatScreen }
+export { DisplayMessages, ChatScreen }

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import {
   StyleSheet,
   View,
-  FlatList,
   Text,
   TextInput,
   TouchableOpacity,
@@ -13,29 +12,12 @@ import {
 import { Entypo } from '@expo/vector-icons'
 
 import { withAuthorization } from '../../Session'
+import DisplayMessages from './DisplayMessages'
 import Header from '../../HOCs/withHeader'
-import List from '../../List'
 
 const iconStyle = {
   color: '#61dafb',
   size: 25
-}
-
-const ShowMessages = ({ messagesList, renderItem, extraData, ...props }) => {
-  return (
-    <FlatList
-      data={messagesList}
-      extraData={extraData}
-      keyExtractor={(item, index) => index.toString()}
-      renderItem={renderItem}
-      {...props}
-    />
-  )
-}
-
-ShowMessages.propTypes = {
-  messagesList: PropTypes.array,
-  renderItem: PropTypes.func.isRequired
 }
 
 class ChatScreen extends Component {
@@ -89,7 +71,7 @@ class ChatScreen extends Component {
     this.state.chatPath && this.onReadMessage()
   }
 
-  componentDidUpdate = (prevProps, prevState) => {
+  componentDidUpdate = () => {
     this.state.chatPath && this.onReadMessage()
   }
 
@@ -120,37 +102,6 @@ class ChatScreen extends Component {
             }
           })
       })
-  }
-
-  // Display messages in ShowMessages component
-  renderItem = ({ item }) => {
-    const { authUser } = this.props
-    const { usersIDs } = this.state
-
-    const getSentDate = new Date(item.createdAt).toLocaleDateString()
-    const currentDate = new Date().toLocaleDateString()
-    const showDate =
-      getSentDate !== currentDate
-        ? getSentDate
-        : new Date(item.createdAt).toLocaleTimeString()
-    // The color of text depends on isRead value
-    const textColor =
-      item.userId === authUser.uid
-        ? item.isRead === 'true'
-          ? styles.read
-          : styles.unRead
-        : styles.read
-
-    return (
-      <List
-        title={usersIDs[item.userId] || item.userId}
-        subTitle={item.text}
-        image={authUser.photoURL}
-        date={showDate}
-        read={textColor}
-        fontStyle={styles.text}
-      />
-    )
   }
 
   // On press Send button or submit input
@@ -294,20 +245,24 @@ class ChatScreen extends Component {
 
   render() {
     const {
+      authUser,
       history,
       state: { cid, contactName }
     } = this.props
-    const { text, error, messagesList, isLoading } = this.state
+    const { usersIDs, text, error, messagesList, isLoading } = this.state
 
     return (
       <View style={styles.container}>
         <Header title={contactName} history={history} />
+        {/* ACTIVITY INDICATOR ON LOADING */}
         {isLoading && (
           <ActivityIndicator style={styles.spinner} size="large" color="#222" />
         )}
+
         {/* DISPLAY MESSAGES */}
-        <ShowMessages
-          renderItem={this.renderItem}
+        <DisplayMessages
+          authUser={authUser}
+          usersIDs={usersIDs}
           extraData={messagesList}
           messagesList={messagesList}
           viewabilityConfig={this.viewabilityConfig}
@@ -368,11 +323,6 @@ const styles = StyleSheet.create({
   rowText: {
     flex: 1
   },
-  text: {
-    fontStyle: 'normal'
-  },
-  read: { color: 'navy' },
-  unRead: { color: 'red' },
   footer: {
     flexDirection: 'row',
     backgroundColor: '#222',
